@@ -71,8 +71,10 @@ begin
   rw [pow_zero, nat.sub_zero, one_mul, choose_zero_right, nat.cast_one, mul_one]
 end
 
-theorem add_pow_n_char (α : Type u) [comm_ring α] {p : ℕ} (hp : nat.prime p) {n : ℕ}
-  [char_p α p] (x y : α) : (x + y)^(p^n) = x^(p^n) + y^(p^n) := sorry
+theorem add_pow_pow_char (α : Type u) [comm_ring α] {p : ℕ} (hp : nat.prime p) {n : ℕ}
+  [char_p α p] (x y : α) : (x + y)^(p^n) = x^(p^n) + y^(p^n) :=
+nat.rec_on n (by rw[nat.pow_zero]; repeat {rw[pow_one]})
+  (λ m hm, by rw[nat.pow_succ]; repeat{rw[pow_mul]}; rw[←add_pow_char α hp, hm])
 
 /-- The frobenius map that sends x to x^p -/
 def frobenius (α : Type u) [monoid α] (p : ℕ) (x : α) : α := x^p

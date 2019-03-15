@@ -55,7 +55,7 @@ have hq : p^n > 1, from sorry,
 let f := (X^(p^n) - X : polynomial β) in
 { zero_mem := by rw[root_Xq_X_iff hq]; exact zero_pow (nat.pow_pos hp.pos n),
   one_mem  := by rw[root_Xq_X_iff hq]; exact one_pow _,
-  add_mem  := λ a b ha hb, by rw[root_Xq_X_iff hq] at ha hb ⊢; rw [add_pow_n_char β hp a b, ha, hb],
+  add_mem  := λ a b ha hb, by rw[root_Xq_X_iff hq] at ha hb ⊢; rw [add_pow_pow_char β hp a b, ha, hb],
   neg_mem  := λ a ha, by rw root_Xq_X_iff at ha ⊢; sorry,
   mul_mem := λ a b ha hb, by rw[root_Xq_X_iff hq] at ha hb ⊢; rw [mul_pow, ha, hb],
   inv_mem := λ a ha0 ha, by rw[root_Xq_X_iff hq] at ha ⊢; sorry }
