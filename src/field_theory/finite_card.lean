@@ -26,12 +26,23 @@ have hn : n > 0, from or.resolve_left (nat.eq_zero_or_pos n)
 theorem card' : ∃ (p : ℕ) (n : ℕ+), nat.prime p ∧ fintype.card α = p^(n : ℕ) :=
 let ⟨p, hc⟩ := char_p.exists α in ⟨p, @finite_field.card α _ _ p hc⟩
 
-
 open polynomial
 
-lemma root_Xq_X_iff (β : Type v) (x : β) [discrete_field β] {q : ℕ} :
+lemma degree_Xq_X {β : Type v} [discrete_field β] {q : ℕ} (hq : q > 1) :
+  degree (X^q - X : polynomial β) = q :=
+have (X^q - X : polynomial β) = X^q + -X, from rfl,
+begin
+  rw [this, ←degree_X_pow q, add_comm],
+  apply degree_add_eq_of_degree_lt,
+  rw[degree_neg, degree_X, degree_X_pow],
+  sorry
+end
+
+--(eq.symm hXq) ▸ degree_add_eq_of_degree_lt this
+
+lemma root_Xq_X_iff {β : Type v} {x : β} [discrete_field β] {q : ℕ} (hq : q > 1) :
   x ∈ (↑(X^q - X : polynomial β).roots : set β) ↔ x^q = x :=
-have h0 : (X^q - X : polynomial β) ≠ 0, from sorry,
+have h0 : (X^q - X : polynomial β) ≠ 0, begin apply ne_zero_of_degree_gt, rw[degree_Xq_X hq], sorry, sorry end,
 calc x ∈ (↑(X^q - X : polynomial β).roots : set β)
       ↔ is_root (X ^ q - X) x : by rw [finset.mem_coe, mem_roots h0]
   ... ↔ -x + x ^ q = 0        : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
@@ -40,12 +51,13 @@ calc x ∈ (↑(X^q - X : polynomial β).roots : set β)
 --note: the characteristic of β follows from i : α → β
 theorem subfield_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) :
   is_subfield (↑(X^(p^n) - X : polynomial β).roots : set β) :=
-  let f := (X^(p^n) - X : polynomial β) in
-  { zero_mem := by rw root_Xq_X_iff; exact zero_pow (nat.pow_pos hp.pos n),
-    one_mem  := by rw root_Xq_X_iff; exact one_pow _,
-    add_mem  := λ a b ha hb, by rw root_Xq_X_iff at ha hb ⊢; rw [add_pow_n_char β hp a b, ha, hb],
-    neg_mem  := λ a ha, by rw root_Xq_X_iff at ha ⊢; sorry,
-    mul_mem := λ a b ha hb, by rw root_Xq_X_iff at ha hb ⊢; rw [mul_pow, ha, hb],
-    inv_mem := λ a ha0 ha, by rw root_Xq_X_iff at ha ⊢; sorry }
+have hq : p^n > 1, from sorry,
+let f := (X^(p^n) - X : polynomial β) in
+{ zero_mem := by rw[root_Xq_X_iff hq]; exact zero_pow (nat.pow_pos hp.pos n),
+  one_mem  := by rw[root_Xq_X_iff hq]; exact one_pow _,
+  add_mem  := λ a b ha hb, by rw[root_Xq_X_iff hq] at ha hb ⊢; rw [add_pow_n_char β hp a b, ha, hb],
+  neg_mem  := λ a ha, by rw root_Xq_X_iff at ha ⊢; sorry,
+  mul_mem := λ a b ha hb, by rw[root_Xq_X_iff hq] at ha hb ⊢; rw [mul_pow, ha, hb],
+  inv_mem := λ a ha0 ha, by rw[root_Xq_X_iff hq] at ha ⊢; sorry }
 
 end finite_field
