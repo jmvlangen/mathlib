@@ -96,6 +96,19 @@ instance {α : Type u} [comm_ring α] (p : ℕ) [hp : nat.prime p] [char_p α p]
   map_mul := frobenius_mul α p,
   map_add := add_pow_char α hp }
 
+lemma frobenius_pow_succ (α : Type u) [monoid α] (p : ℕ) (n : ℕ) :
+  frobenius α (p^(n+2)) = frobenius α p ∘ frobenius α (p^(n+1)) :=
+funext $ λ x, by unfold function.comp; repeat {rw[frobenius_def]}; rw[←pow_mul,←nat.pow_succ]
+
+instance frobenius_pow {α : Type u} [comm_ring α] (p : ℕ) [hp : nat.prime p] [char_p α p] {n : ℕ} :
+  is_ring_hom (frobenius α (p^(n+1))) :=
+nat.rec_on n (by rw[zero_add, nat.pow_one]; apply_instance)
+  (λ n hn, begin
+    rw frobenius_pow_succ,
+    apply is_ring_hom.comp _ _,
+    apply_instance, exact hn, apply_instance
+  end)
+
 section
 variables (α : Type u) [comm_ring α] (p : ℕ) [hp : nat.prime p]
 theorem frobenius_zero : frobenius α p 0 = 0 := zero_pow hp.pos

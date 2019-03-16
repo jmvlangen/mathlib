@@ -34,6 +34,14 @@ instance is_subring_set_range {R : Type u} {S : Type v} [ring R] [ring S]
   add_mem := λ x y ⟨p, hp⟩ ⟨q, hq⟩, ⟨p + q, hp ▸ hq ▸ is_ring_hom.map_add f⟩,
   mul_mem := λ x y ⟨p, hp⟩ ⟨q, hq⟩, ⟨p * q, hp ▸ hq ▸ is_ring_hom.map_mul f⟩, }
 
+def invariant_subring {R : Type u} [ring R] (f : R → R) [is_ring_hom f] :
+  is_subring {x | f x = x} :=
+{ zero_mem := map_zero f,
+  one_mem  := map_one f,
+  add_mem  := λ x y hx hy, by rw set.mem_set_of_eq at hx hy ⊢; rw[map_add f, hx, hy],
+  neg_mem  := λ x hx, by rw set.mem_set_of_eq at hx ⊢; rw[map_neg f, hx],
+  mul_mem  := λ x y hx hy, by rw set.mem_set_of_eq at hx hy ⊢; rw[map_mul f, hx, hy] }
+
 end is_ring_hom
 
 variables {cR : Type u} [comm_ring cR]

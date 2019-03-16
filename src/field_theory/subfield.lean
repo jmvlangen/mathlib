@@ -11,6 +11,15 @@ variables {F : Type*} [field F] (S : set F)
 class is_subfield extends is_subring S : Prop :=
 (inv_mem : ∀ {x : F}, x ≠ 0 → x ∈ S → x⁻¹ ∈ S)
 
+namespace is_field_hom
+
+def invariant_subfield {α : Type*} [discrete_field α] (f : α → α) [is_field_hom f] :
+  is_subfield {x | f x = x} :=
+{ inv_mem := λ x _, show f x = x → f x⁻¹ = x⁻¹, from λ hx, by rw[map_inv f, hx],
+  ..(is_ring_hom.invariant_subring f) }
+
+end is_field_hom
+
 namespace field
 
 def closure : set F :=

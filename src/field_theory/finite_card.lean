@@ -35,29 +35,27 @@ begin
   rw [this, ←degree_X_pow q, add_comm],
   apply degree_add_eq_of_degree_lt,
   rw[degree_neg, degree_X, degree_X_pow],
-  sorry
+  exact with_bot.coe_lt_coe.mpr hq
 end
 
---(eq.symm hXq) ▸ degree_add_eq_of_degree_lt this
-
-lemma root_Xq_X_iff {β : Type v} {x : β} [discrete_field β] {q : ℕ} (hq : q > 1) :
-  x ∈ (↑(X^q - X : polynomial β).roots : set β) ↔ x^q = x :=
-have h0 : (X^q - X : polynomial β) ≠ 0, begin apply ne_zero_of_degree_gt, rw[degree_Xq_X hq], sorry, sorry end,
-calc x ∈ (↑(X^q - X : polynomial β).roots : set β)
-      ↔ is_root (X ^ q - X) x : by rw [finset.mem_coe, mem_roots h0]
-  ... ↔ -x + x ^ q = 0        : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
-  ... ↔ x^q = x               : by rw[←add_left_inj x, add_zero, add_neg_cancel_left]
-
---note: the characteristic of β follows from i : α → β
-theorem subfield_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) :
+/-- The set of roots of x^p^n-x in β where char(β) = p forms a subfield of β.
+ This is because it is the invariant subfield of the n-th iterate of the p-frobenius -/
+theorem subfield_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0) :
   is_subfield (↑(X^(p^n) - X : polynomial β).roots : set β) :=
-have hq : p^n > 1, from sorry,
 let f := (X^(p^n) - X : polynomial β) in
-{ zero_mem := by rw[root_Xq_X_iff hq]; exact zero_pow (nat.pow_pos hp.pos n),
-  one_mem  := by rw[root_Xq_X_iff hq]; exact one_pow _,
-  add_mem  := λ a b ha hb, by rw[root_Xq_X_iff hq] at ha hb ⊢; rw [add_pow_pow_char β hp a b, ha, hb],
-  neg_mem  := λ a ha, by rw root_Xq_X_iff at ha ⊢; sorry,
-  mul_mem := λ a b ha hb, by rw[root_Xq_X_iff hq] at ha hb ⊢; rw [mul_pow, ha, hb],
-  inv_mem := λ a ha0 ha, begin rw[root_Xq_X_iff hq] at ha ⊢, rw[←pow_inv a (p^n) ha0, ha] end }
+suffices (↑(X^(p^n) - X : polynomial β).roots : set β) = {x | (frobenius β (p^n)) x = x},
+  by rw [this, ←nat.succ_pred_eq_of_pos hn];
+  exact is_field_hom.invariant_subfield (frobenius β (p^((n-1)+1))),
+have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
+have h0 : (X^p^n - X : polynomial β) ≠ 0, from
+  ne_zero_of_degree_gt (by rw[degree_Xq_X hq, with_bot.coe_lt_coe]; exact hq),
+set.ext $ λ x,
+calc x ∈ (↑(X^p^n - X : polynomial β).roots : set β)
+      ↔ is_root (X^p^n - X) x : by rw [finset.mem_coe, mem_roots h0]
+  ... ↔ -x + x^p^n = 0        : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
+  ... ↔ x^p^n = x             : by rw[←add_left_inj x, add_zero, add_neg_cancel_left]
+
+
+
 
 end finite_field
