@@ -2005,6 +2005,31 @@ calc derivative (f * g) = f.sum (λn a, g.sum (λm b, C ((a * b) * (n + m : ℕ)
 lemma derivative_eval (p : polynomial α) (x : α) : p.derivative.eval x = p.sum (λ n a, (a * n)*x^(n-1)) :=
 by simp [derivative, eval_sum, eval_pow]
 
+lemma derivative_pow (p : polynomial α) {n : ℕ} (hn : n > 0) : derivative (p^n) = C n * p^(n-1) * derivative p :=
+begin
+  rw[←nat.succ_pred_eq_of_pos hn, ←nat.pred_eq_sub_one, nat.pred_succ (nat.pred n)],
+  exact (nat.rec_on (nat.pred n) (by rw[pow_one, pow_zero, nat.cast_one, C_1, one_mul, one_mul])
+  (λ m hm,
+  calc derivative (p^((m+1)+1)) = derivative (p * p^(m+1))                 : by rw [pow_succ]
+    ... = derivative p * p^(m+1) + p * derivative (p^(m+1))                : derivative_mul
+    ... = p^(m+1) * derivative p + p * (C(m+1) * p^m * derivative p)       : by rw[mul_comm, hm, nat.succ_eq_add_one, nat.cast_add, nat.cast_one]
+    ... = p^(m+1) * derivative p + C(m+1) * (p^(m+1) * derivative p)       : by rw[←mul_assoc p _ (derivative p),←mul_assoc p _ (p^m), mul_comm p, pow_succ, ←mul_assoc _ (p * p^m), ←mul_assoc]
+    ... = 1 * (p^(m+1) * derivative p) + C(m+1) * (p^(m+1) * derivative p) : by rw[one_mul]
+    ... = C ((m+1)+1) * p^(m+1) * derivative p                             : by rw[←C_1,←add_mul (C 1) (C (↑m+1)) (p ^ (m + 1) * derivative p),←C_add,add_comm,mul_assoc]))
+end
+
+lemma derivative_dvd {α : Type*} [comm_ring α] [decidable_eq α] {n : ℕ} (hn : n > 0) (p : polynomial α)
+  {q : polynomial α} (hq : monic q) : q^n ∣ p → q^(n-1) ∣ p.derivative :=
+assume h, begin
+  rw[←dvd_iff_mod_by_monic_eq_zero (monic_pow hq n)] at h,
+  rw[←mod_by_monic_add_div p (monic_pow hq n)],
+  rw[h, zero_add, derivative_mul, derivative_pow q hn, mul_comm _ (q^(n-1))],
+  refine dvd_add _ _,
+  repeat {apply dvd_mul_of_dvd_left},
+  exact dvd_refl _,
+  exact pow_dvd_pow q (nat.pred_le n)
+end
+
 end derivative
 
 section domain
