@@ -2008,14 +2008,14 @@ by simp [derivative, eval_sum, eval_pow]
 lemma derivative_pow (p : polynomial α) {n : ℕ} (hn : n > 0) : derivative (p^n) = C n * p^(n-1) * derivative p :=
 begin
   rw[←nat.succ_pred_eq_of_pos hn, ←nat.pred_eq_sub_one, nat.pred_succ (nat.pred n)],
-  exact (nat.rec_on (nat.pred n) (by rw[pow_one, pow_zero, nat.cast_one, C_1, one_mul, one_mul])
-  (λ m hm,
-  calc derivative (p^((m+1)+1)) = derivative (p * p^(m+1))                 : by rw [pow_succ]
-    ... = derivative p * p^(m+1) + p * derivative (p^(m+1))                : derivative_mul
-    ... = p^(m+1) * derivative p + p * (C(m+1) * p^m * derivative p)       : by rw[mul_comm, hm, nat.succ_eq_add_one, nat.cast_add, nat.cast_one]
-    ... = p^(m+1) * derivative p + C(m+1) * (p^(m+1) * derivative p)       : by rw[←mul_assoc p _ (derivative p),←mul_assoc p _ (p^m), mul_comm p, pow_succ, ←mul_assoc _ (p * p^m), ←mul_assoc]
-    ... = 1 * (p^(m+1) * derivative p) + C(m+1) * (p^(m+1) * derivative p) : by rw[one_mul]
-    ... = C ((m+1)+1) * p^(m+1) * derivative p                             : by rw[←C_1,←add_mul (C 1) (C (↑m+1)) (p ^ (m + 1) * derivative p),←C_add,add_comm,mul_assoc]))
+  induction (nat.pred n),
+    { rw[pow_one, pow_zero, nat.cast_one, C_1, one_mul, one_mul] },
+    { exact calc derivative (p^((n_1+1)+1)) = derivative (p * p^(n_1+1))           : by rw [pow_succ]
+      ... = derivative p * p^(n_1+1) + p * derivative (p^(n_1+1))                  : derivative_mul
+      ... = p^(n_1+1) * derivative p + p * (C(n_1+1) * p^n_1 * derivative p)       : by rw[mul_comm, ih, nat.succ_eq_add_one, nat.cast_add, nat.cast_one]
+      ... = p^(n_1+1) * derivative p + C(n_1+1) * (p^(n_1+1) * derivative p)       : by rw[←mul_assoc p _ (derivative p),←mul_assoc p _ (p^n_1), mul_comm p, pow_succ, ←mul_assoc _ (p * p^n_1), ←mul_assoc]
+      ... = 1 * (p^(n_1+1) * derivative p) + C(n_1+1) * (p^(n_1+1) * derivative p) : by rw[one_mul]
+      ... = C ((n_1+1)+1) * p^(n_1+1) * derivative p                               : by rw[←C_1,←add_mul (C 1) (C (↑n_1+1)) (p ^ (n_1 + 1) * derivative p),←C_add,add_comm,mul_assoc] }
 end
 
 lemma derivative_dvd {α : Type*} [comm_ring α] [decidable_eq α] {n : ℕ} (hn : n > 0) (p : polynomial α)
