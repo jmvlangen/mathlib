@@ -71,11 +71,6 @@ begin
   rw [pow_zero, nat.sub_zero, one_mul, choose_zero_right, nat.cast_one, mul_one]
 end
 
-theorem add_pow_pow_char (α : Type u) [comm_ring α] {p : ℕ} (hp : nat.prime p) {n : ℕ}
-  [char_p α p] (x y : α) : (x + y)^(p^n) = x^(p^n) + y^(p^n) :=
-nat.rec_on n (by rw[nat.pow_zero]; repeat {rw[pow_one]})
-  (λ m hm, by rw[nat.pow_succ]; repeat{rw[pow_mul]}; rw[←add_pow_char α hp, hm])
-
 /-- The frobenius map that sends x to x^p -/
 def frobenius (α : Type u) [monoid α] (p : ℕ) (x : α) : α := x^p
 
@@ -97,17 +92,15 @@ instance {α : Type u} [comm_ring α] (p : ℕ) [hp : nat.prime p] [char_p α p]
   map_add := add_pow_char α hp }
 
 lemma frobenius_pow_succ (α : Type u) [monoid α] (p : ℕ) (n : ℕ) :
-  frobenius α (p^(n+2)) = frobenius α p ∘ frobenius α (p^(n+1)) :=
+  frobenius α (p^(n+1)) = frobenius α p ∘ frobenius α (p^n) :=
 funext $ λ x, by unfold function.comp; repeat {rw[frobenius_def]}; rw[←pow_mul,←nat.pow_succ]
 
 instance frobenius_pow {α : Type u} [comm_ring α] (p : ℕ) [hp : nat.prime p] [char_p α p] {n : ℕ} :
   is_ring_hom (frobenius α (p^(n+1))) :=
 nat.rec_on n (by rw[zero_add, nat.pow_one]; apply_instance)
-  (λ n hn, begin
-    rw frobenius_pow_succ,
-    apply is_ring_hom.comp _ _,
-    apply_instance, exact hn, apply_instance
-  end)
+  (λ n hn, by rw frobenius_pow_succ; apply is_ring_hom.comp _ _;
+    all_goals { apply_instance <|> assumption })
+
 
 section
 variables (α : Type u) [comm_ring α] (p : ℕ) [hp : nat.prime p]

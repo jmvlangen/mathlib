@@ -47,15 +47,14 @@ end
 theorem subfield_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0) :
   is_subfield (↑(X^p^n - X : polynomial β).roots : set β) :=
 let f := (X^p^n - X : polynomial β) in
-suffices (↑(X^p^n - X : polynomial β).roots : set β) = {x | (frobenius β (p^n)) x = x},
+suffices (↑f.roots : set β) = {x | (frobenius β (p^n)) x = x},
   by rw [this, ←nat.succ_pred_eq_of_pos hn];
   exact is_field_hom.invariant_subfield (frobenius β (p^((n-1)+1))),
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
-have h0 : (X^p^n - X : polynomial β) ≠ 0, from
-  ne_zero_of_degree_gt (by rw[degree_Xq_X hq, with_bot.coe_lt_coe]; exact hq),
+have h0 : f ≠ 0, from ne_zero_of_degree_gt (by rwa[degree_Xq_X hq, with_bot.coe_lt_coe]),
 set.ext $ λ x,
-calc x ∈ (↑(X^p^n - X : polynomial β).roots : set β)
-      ↔ is_root (X^p^n - X) x : by rw [finset.mem_coe, mem_roots h0]
+calc x ∈ (↑f.roots : set β)
+      ↔ is_root f x : by rw [finset.mem_coe, mem_roots h0]
   ... ↔ -x + x^p^n = 0        : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
   ... ↔ x^p^n = x             : by rw[←add_left_inj x, add_zero, add_neg_cancel_left]
 
@@ -72,9 +71,10 @@ begin
 end
 
 lemma distinct_roots_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0)
-  (x : β) (hx : x ∈ (↑(X^p^n - X : polynomial β).roots : set β)) : root_multiplicity x (X^p^n - X) ≤ 1 :=
-classical.by_contradiction (λ h0,
-  have h2 : root_multiplicity x (X^p^n - X) ≥ 2, by rwa[not_le, ←nat.succ_le_iff] at h0,
+  (x : β) (hx : x ∈ (↑(X^p^n - X : polynomial β).roots : set β)) : root_multiplicity x (X^p^n - X) = 1 :=
+eq.symm $ nat.eq_of_lt_succ_of_not_lt sorry
+  (λ h0,
+  have h2 : root_multiplicity x (X^p^n - X) ≥ 2, by rwa[←nat.succ_le_iff] at h0,
   have h : (X - C x)^2 ∣ X^p^n - X, from dvd_trans (pow_dvd_pow (X-C x) h2) (pow_root_multiplicity_dvd _ _),
   have 2 > 0, from nat.add_pos_left nat.one_pos 1,
   have (X - C x)^(1+1-1) ∣ derivative (X^p^n - X), from derivative_dvd ‹2 > 0› _ (monic_X_sub_C x) h,
@@ -83,4 +83,15 @@ classical.by_contradiction (λ h0,
   have (1 : β) = 0, from eq_of_neg_eq_neg (by rwa[is_root.def, eval_C,←neg_zero] at this),
   absurd this one_ne_zero)
 
+noncomputable instance fintype_Fq (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0) :
+  fintype (↑(X^p^n - X : polynomial β).roots : set β) := set.finite.fintype $ finset.finite_to_set _
+
+lemma card_Fq (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0)
+  (h : splits id (X^p^n - X : polynomial β)) :
+  fintype.card (↑(X^p^n - X : polynomial β).roots : set β) = p^n :=
+let ⟨s, hs⟩ := exists_multiset_of_splits id h in
+have h0 : ∀ x, multiset.count x s = root_multiplicity x (X^p^n - X : polynomial β), from sorry,
+--have h1 : ∀ x, multiset.count x s = 1, by rwa[distinct_roots_Xq_X] at h0,
+have h2 : multiset.card s = p^n := sorry,
+sorry
 end finite_field
