@@ -42,6 +42,9 @@ begin
   exact with_bot.coe_lt_coe.mpr hq
 end
 
+lemma ne_zero_Xq_X {β : Type v} [discrete_field β] {q : ℕ} (hq : q > 1) :
+  (X^q - X : polynomial β) ≠ 0 := ne_zero_of_degree_gt (by rwa[degree_Xq_X hq, with_bot.coe_lt_coe])
+
 /-- The set of roots of x^p^n-x in β where char(β) = p forms a subfield of β.
  This is because it is the invariant subfield of the n-th iterate of the p-frobenius -/
 theorem subfield_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0) :
@@ -51,12 +54,11 @@ suffices (↑f.roots : set β) = {x | (frobenius β (p^n)) x = x},
   by rw [this, ←nat.succ_pred_eq_of_pos hn];
   exact is_field_hom.invariant_subfield (frobenius β (p^((n-1)+1))),
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
-have h0 : f ≠ 0, from ne_zero_of_degree_gt (by rwa[degree_Xq_X hq, with_bot.coe_lt_coe]),
 set.ext $ λ x,
 calc x ∈ (↑f.roots : set β)
-      ↔ is_root f x : by rw [finset.mem_coe, mem_roots h0]
-  ... ↔ -x + x^p^n = 0        : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
-  ... ↔ x^p^n = x             : by rw[←add_left_inj x, add_zero, add_neg_cancel_left]
+      ↔ is_root f x    : by rw [finset.mem_coe, mem_roots (ne_zero_Xq_X hq)]
+  ... ↔ -x + x^p^n = 0 : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
+  ... ↔ x^p^n = x      : by rw[←add_left_inj x, add_zero, add_neg_cancel_left]
 
 lemma derivative_Xq_X {β : Type v} [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0) :
   derivative (X^p^n - X : polynomial β) = C (-1) :=
@@ -70,18 +72,21 @@ begin
     nat.pow_dvd_pow p (nat.one_le_of_lt hn)
 end
 
+--set_option profiler true
 lemma distinct_roots_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0)
   (x : β) (hx : x ∈ (↑(X^p^n - X : polynomial β).roots : set β)) : root_multiplicity x (X^p^n - X) = 1 :=
-eq.symm $ nat.eq_of_lt_succ_of_not_lt sorry
-  (λ h0,
-  have h2 : root_multiplicity x (X^p^n - X) ≥ 2, by rwa[←nat.succ_le_iff] at h0,
-  have h : (X - C x)^2 ∣ X^p^n - X, from dvd_trans (pow_dvd_pow (X-C x) h2) (pow_root_multiplicity_dvd _ _),
-  have 2 > 0, from nat.add_pos_left nat.one_pos 1,
-  have (X - C x)^(1+1-1) ∣ derivative (X^p^n - X), from derivative_dvd ‹2 > 0› _ (monic_X_sub_C x) h,
-  have is_root (C (-1)) x, by rw[←dvd_iff_is_root];
-    rwa[derivative_Xq_X p hp n hn, nat.succ_sub_one, pow_one] at this; apply_instance,
-  have (1 : β) = 0, from eq_of_neg_eq_neg (by rwa[is_root.def, eval_C,←neg_zero] at this),
-  absurd this one_ne_zero)
+have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
+eq.symm $ nat.eq_of_lt_succ_of_not_lt
+  (nat.succ_lt_succ $ root_multiplicity_pos_iff_is_root.mpr $ by rwa[finset.mem_coe, mem_roots (ne_zero_Xq_X hq)] at hx)
+  (λ _ : 1 < root_multiplicity x (X ^ p ^ n - X),
+  have is_root (C (-1)) x,
+    begin
+      rw[←dvd_iff_is_root,←derivative_Xq_X p hp n hn,←pow_one (X - C x),←nat.succ_sub_one 1],
+      refine derivative_dvd (nat.succ_pos 1) _ (monic_X_sub_C x) _,
+        { refine dvd_trans (pow_dvd_pow (X-C x) _) (pow_root_multiplicity_dvd _ _), rwa[nat.succ_le_iff] },
+        { apply_instance }
+    end,
+  absurd (show (1 : β) = 0, by simpa) one_ne_zero)
 
 noncomputable instance fintype_Fq (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0) :
   fintype (↑(X^p^n - X : polynomial β).roots : set β) := set.finite.fintype $ finset.finite_to_set _
