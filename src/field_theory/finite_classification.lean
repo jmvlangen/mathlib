@@ -42,7 +42,7 @@ begin
   exact with_bot.coe_lt_coe.mpr hq
 end
 
-lemma ne_zero_Xq_X {β : Type v} [discrete_field β] {q : ℕ} (hq : q > 1) :
+lemma Xq_X_ne_zero {β : Type v} [discrete_field β] {q : ℕ} (hq : q > 1) :
   (X^q - X : polynomial β) ≠ 0 := ne_zero_of_degree_gt (by rwa[degree_Xq_X hq, with_bot.coe_lt_coe])
 
 /-- The set of roots of x^p^n-x in β where char(β) = p forms a subfield of β.
@@ -56,7 +56,7 @@ suffices (↑f.roots : set β) = {x | (frobenius β (p^n)) x = x},
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
 set.ext $ λ x,
 calc x ∈ (↑f.roots : set β)
-      ↔ is_root f x    : by rw [finset.mem_coe, mem_roots (ne_zero_Xq_X hq)]
+      ↔ is_root f x    : by rw [finset.mem_coe, mem_roots (Xq_X_ne_zero hq)]
   ... ↔ -x + x^p^n = 0 : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
   ... ↔ x^p^n = x      : by rw[←add_left_inj x, add_zero, add_neg_cancel_left]
 
@@ -77,7 +77,8 @@ lemma distinct_roots_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β
   (x : β) (hx : x ∈ (↑(X^p^n - X : polynomial β).roots : set β)) : root_multiplicity x (X^p^n - X) = 1 :=
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
 eq.symm $ nat.eq_of_lt_succ_of_not_lt
-  (nat.succ_lt_succ $ root_multiplicity_pos_iff_is_root.mpr $ by rwa[finset.mem_coe, mem_roots (ne_zero_Xq_X hq)] at hx)
+  (nat.succ_lt_succ $ (root_multiplicity_pos_iff_is_root $ Xq_X_ne_zero hq).mpr $
+    by rwa[finset.mem_coe, mem_roots (Xq_X_ne_zero hq)] at hx)
   (λ _ : 1 < root_multiplicity x (X ^ p ^ n - X),
   have is_root (C (-1)) x,
     begin
