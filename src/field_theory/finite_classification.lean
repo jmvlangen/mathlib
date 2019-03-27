@@ -52,7 +52,7 @@ theorem subfield_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] 
 let f := (X^p^n - X : polynomial β) in
 suffices (↑f.roots : set β) = {x | (frobenius β (p^n)) x = x},
   by rw [this, ←nat.succ_pred_eq_of_pos hn];
-  exact is_field_hom.invariant_subfield (frobenius β (p^((n-1)+1))),
+  exact is_field_hom.fixed_subfield (frobenius β (p^((n-1)+1))),
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
 set.ext $ λ x,
 calc x ∈ (↑f.roots : set β)
@@ -72,8 +72,7 @@ begin
     nat.pow_dvd_pow p (nat.one_le_of_lt hn)
 end
 
---set_option profiler true
-lemma distinct_roots_Xq_X (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0)
+lemma distinct_roots_Xq_X (β : Type v) [discrete_field β] {p : ℕ} [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0)
   (x : β) (hx : x ∈ (↑(X^p^n - X : polynomial β).roots : set β)) : root_multiplicity x (X^p^n - X) = 1 :=
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
 eq.symm $ nat.eq_of_lt_succ_of_not_lt
@@ -97,7 +96,11 @@ lemma card_Fq (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : na
   fintype.card (↑(X^p^n - X : polynomial β).roots : set β) = p^n :=
 let ⟨s, hs⟩ := exists_multiset_of_splits id h in
 have h0 : ∀ x, multiset.count x s = root_multiplicity x (X^p^n - X : polynomial β), from sorry,
---have h1 : ∀ x, multiset.count x s = 1, by rwa[distinct_roots_Xq_X] at h0,
-have h2 : multiset.card s = p^n := sorry,
-sorry
+have h1 : ∀ x, x ∈ (roots (X^p^n - X : polynomial β)) → multiset.count x s = 1,
+  from λ x hx, (distinct_roots_Xq_X _ hp n hn x hx) ▸ (h0 x),
+have h2 : ∀ x, x ∈ s ↔ x ∈ (↑(X^p^n - X : polynomial β).roots : set β), from sorry,
+have h3 : ∀ x, x ∈ s → multiset.count x s = 1, from λ x hx, h1 x $ sorry,
+have h4 : multiset.card s = p^n,from sorry,
+have h5 : fintype.card (s : set β) = p^n, from sorry,
+show fintype.card (↑(X^p^n - X : polynomial β).roots : set β) = p^n, from sorry
 end finite_field
