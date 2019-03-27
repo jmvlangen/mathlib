@@ -1480,17 +1480,11 @@ begin
     (nat.lt_succ_self _) (dvd_of_mul_right_eq _ this)
 end
 
-lemma root_multiplicity_pos_iff_is_root {p : polynomial α} {hp : p ≠ 0} {a : α} :
-  root_multiplicity a p > 0 ↔ is_root p a :=
-begin
-  rw[←dvd_iff_is_root, ←pow_one (X - C a), multiplicity.pow_dvd_iff_le_multiplicity],
-  rw[root_multiplicity_eq_multiplicity, dif_neg hp], sorry
-  --constructor,
-  --  { assume h, exact dvd_trans (pow_dvd_pow _ h) (pow_root_multiplicity_dvd p a) },
-  --  { assume h, rw[multiplicity.pow_dvd_iff_le_multiplicity] at h,
---
-  --  }
-end
+lemma root_multiplicity_pos_iff_is_root {p : polynomial α} (hp : p ≠ 0) {a : α} :
+  0 < root_multiplicity a p ↔ is_root p a :=
+by rw[←dvd_iff_is_root, ←pow_one (X - C a), multiplicity.pow_dvd_iff_le_multiplicity,
+    (λ n, show 0 < n ↔ 1 ≤ n, by refl), ←enat.coe_le_coe, root_multiplicity_eq_multiplicity,
+    dif_neg hp, enat.coe_get]
 
 end multiplicity
 
