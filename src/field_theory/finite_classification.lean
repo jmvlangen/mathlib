@@ -91,16 +91,43 @@ eq.symm $ nat.eq_of_lt_succ_of_not_lt
 noncomputable instance fintype_Fq (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0) :
   fintype (↑(X^p^n - X : polynomial β).roots : set β) := set.finite.fintype $ finset.finite_to_set _
 
+lemma sum_map_one {α : Type u} {β : Type v} [add_comm_monoid β] [has_one β] {s : multiset α} :
+  (s.map (λ a, (1 : β))).sum = s.card := sorry
+
+lemma leading_coeff_Xq_X {β : Type v} [discrete_field β] {q : ℕ} (hq : q > 1) :
+  leading_coeff (X^q - X : polynomial β) = 1 :=
+by { rw[sub_eq_add_neg, add_comm, leading_coeff_add_of_degree_lt, leading_coeff_pow, leading_coeff_X, one_pow],
+  rwa[degree_X_pow, degree_neg, degree_X, ←with_bot.coe_one, with_bot.coe_lt_coe] }
+
+--set_option pp.notation false
+--set_option pp.implicit true
+--set_option trace.check true
+
 lemma card_Fq (β : Type v) [discrete_field β] (p : ℕ) [char_p β p] (hp : nat.prime p) (n : ℕ) (hn : n > 0)
   (h : splits id (X^p^n - X : polynomial β)) :
   fintype.card (↑(X^p^n - X : polynomial β).roots : set β) = p^n :=
 let ⟨s, hs⟩ := exists_multiset_of_splits id h in
-have h0 : ∀ x, multiset.count x s = root_multiplicity x (X^p^n - X : polynomial β), from sorry,
-have h1 : ∀ x, x ∈ (roots (X^p^n - X : polynomial β)) → multiset.count x s = 1,
-  from λ x hx, (distinct_roots_Xq_X _ hp n hn x hx) ▸ (h0 x),
-have h2 : ∀ x, x ∈ s ↔ x ∈ (↑(X^p^n - X : polynomial β).roots : set β), from sorry,
-have h3 : ∀ x, x ∈ s → multiset.count x s = 1, from λ x hx, h1 x $ sorry,
-have h4 : multiset.card s = p^n,from sorry,
-have h5 : fintype.card (s : set β) = p^n, from sorry,
-show fintype.card (↑(X^p^n - X : polynomial β).roots : set β) = p^n, from sorry
+have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
+have X^p^n - X = multiset.prod (multiset.map (λ (a : β), X - C a) s),
+  by { rwa[leading_coeff_Xq_X, id.def, C_1, one_mul, map_id] at hs, assumption },
+have h1 : (X^p^n - X : polynomial β) = multiset.prod (multiset.map (λ (a : β), X - C a) (X^p^n - X).roots.val), from sorry,
+have h2 : degree (X^p^n - X : polynomial β) = degree (multiset.prod (multiset.map (λ (a : β), X - C a) (X^p^n - X).roots.val)), from sorry,
+begin
+  rw[degree_Xq_X hq, degree_prod_eq, multiset.map_map] at h2,
+  conv at h2 {
+    to_rhs, congr, congr,
+    { rw[show (degree ∘ (λ a, X - C a) = λ (a : β), degree (X - C a)), by congr],
+      funext,
+      rw[degree_X_sub_C] },
+    skip },
+  rw[sum_map_one] at h2,
+  /-rw[←with_bot.coe_eq_coe],
+  conv { to_rhs, rw[h2] },
+  congr,
+  simp,
+  refine fintype.card_coe _,-/
+  sorry
+end
+
+
 end finite_field

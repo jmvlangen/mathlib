@@ -13,10 +13,6 @@ class is_subfield extends is_subring S : Prop :=
 
 namespace is_field_hom
 
-variables (α : Type*) [discrete_field α] (G : set {f : α → α // is_field_hom f})
-variables (f : {f : α → α // is_field_hom f}) (h : f ∈ G)
-#check f.val
-
 def fixed_subfield {α : Type*} [discrete_field α] (f : α → α) [is_field_hom f] :
   is_subfield {x | f x = x} :=
 { inv_mem := λ x _, show f x = x → f x⁻¹ = x⁻¹, from λ hx, by rw[map_inv f, hx],

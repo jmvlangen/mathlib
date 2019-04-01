@@ -6,6 +6,7 @@ Authors: Chris Hughes, Johannes Hölzl, Jens Wagemaker
 Theory of univariate polynomials, represented as `ℕ →₀ α`, where α is a commutative semiring.
 -/
 import data.finsupp algebra.gcd_domain ring_theory.euclidean_domain tactic.ring ring_theory.multiplicity
+import data.multiset
 
 /-- `polynomial α` is the type of univariate polynomials over `α`.
 
@@ -1503,6 +1504,11 @@ else degree_mul_eq' $ mul_ne_zero (mt leading_coeff_eq_zero.1 hp0)
   degree (p ^ n) = add_monoid.smul n (degree p) :=
 by induction n; [simp only [pow_zero, degree_one, add_monoid.zero_smul],
 simp only [*, pow_succ, succ_smul, degree_mul_eq]]
+
+lemma degree_prod_eq (s : multiset (polynomial α)) : degree s.prod = (s.map degree).sum :=
+multiset.induction_on s
+  (by rw[multiset.prod_zero, degree_one, multiset.map_zero, multiset.sum_zero])
+  (λ _ _ h, by rwa[multiset.prod_cons, degree_mul_eq, h, multiset.map_cons, multiset.sum_cons])
 
 @[simp] lemma leading_coeff_mul (p q : polynomial α) : leading_coeff (p * q) =
   leading_coeff p * leading_coeff q :=
