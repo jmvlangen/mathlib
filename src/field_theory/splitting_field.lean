@@ -60,11 +60,12 @@ begin
 end
 
 lemma splits_mul {f g : polynomial α} (hf : splits i f) (hg : splits i g) : splits i (f * g) :=
-if h : f * g = 0 then by simp [h]
+sorry
+/-if h : f * g = 0 then by simp [h]
 else or.inr $ λ p hp hpf, ((principal_ideal_domain.irreducible_iff_prime.1 hp).2.2 _ _
-    (show p ∣ map i f * map i g, by convert hpf; rw map_mul)).elim
+    (show p ∣ map i f * map i g, by convert hpf; rw polynomial.map_mul)).elim
   (hf.resolve_left (λ hf, by simpa [hf] using h) hp)
-  (hg.resolve_left (λ hg, by simpa [hg] using h) hp)
+  (hg.resolve_left (λ hg, by simpa [hg] using h) hp)-/
 
 lemma splits_of_splits_mul {f g : polynomial α} (hfg : f * g ≠ 0) (h : splits i (f * g)) :
   splits i f ∧ splits i g :=
@@ -111,6 +112,39 @@ is_noetherian_ring.irreducible_induction_on (f.map i)
           mul_inv_cancel (show p.leading_coeff ≠ 0, from mt leading_coeff_eq_zero.1
             (nonzero_of_irreducible hp)), one_mul],
       end⟩)
+
+lemma eq_prod_roots {f : polynomial α} : splits i f →
+  f.map i = C (i f.leading_coeff) * (f.map i).roots.prod (λ x, (X - C x) ^ root_multiplicity x (f.map i)) :=
+suffices splits id (f.map i) → f.map i =
+  (C (f.map i).leading_coeff) * (f.map i).roots.prod (λ x, (X - C x) ^ root_multiplicity x (f.map i)),
+by rwa [splits_map_iff, leading_coeff_map i] at this,
+is_noetherian_ring.irreducible_induction_on (f.map i)
+  (λ _, by rw [leading_coeff_zero, C_0, zero_mul])
+  (λ u hu _,
+    have u.roots = ∅,
+      by { rw [←finset.card_eq_zero],
+        refine nat.eq_zero_of_le_zero (with_bot.coe_le_coe.1 _),
+        rw [with_bot.coe_zero, ←is_unit_iff_degree_eq_zero.1 hu],
+        exact card_roots (λ h0, absurd hu (eq.symm h0 ▸ not_is_unit_zero)) },
+    by { conv_lhs { rw eq_C_of_degree_eq_zero (is_unit_iff_degree_eq_zero.1 hu) },
+      rw [leading_coeff, nat_degree_eq_of_degree_eq_some (is_unit_iff_degree_eq_zero.1 hu), this,
+        finset.prod_empty, mul_one] })
+  (λ f p hf0 hp ih hfs,
+    have hpf0 : p * f ≠ 0, from mul_ne_zero (nonzero_of_irreducible hp) hf0,
+    let hf := ih (splits_of_splits_mul _ hpf0 hfs).2 in
+    have hp1 : degree p = 1, from hfs.resolve_left hpf0 hp (by simp),
+    have hpX : p = C (leading_coeff p) * (X - C (-p.coeff 0 / p.coeff 1)), from sorry,
+  begin
+    rw [leading_coeff_mul, C_mul, mul_assoc],
+    conv_lhs { rw [hpX, mul_assoc, mul_comm _ f, hf, mul_assoc (C _)] },
+    rw [domain.mul_left_inj sorry],
+    rw [domain.mul_left_inj sorry],
+    conv_rhs { congr, skip, funext, rw [root_multiplicity_mul, pow_add] },
+    rw [finset.prod_mul_distrib],
+
+    --prod_filter
+
+  end)
 
 section UFD
 
