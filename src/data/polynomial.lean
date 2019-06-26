@@ -1703,6 +1703,21 @@ lemma root_or_root_of_root_mul (h : is_root (p * q) a) : is_root p a ∨ is_root
 by rw [is_root, eval_mul] at h;
   exact eq_zero_or_eq_zero_of_mul_eq_zero h
 
+lemma root_mul_iff_root_or_root : is_root (p * q) a ↔ is_root p a ∨ is_root q a :=
+⟨root_or_root_of_root_mul, or.rec (root_mul_right_of_is_root q) (root_mul_left_of_is_root p)⟩
+
+lemma root_one : ¬is_root 1 a :=
+by unfold is_root; rw [eval_one]; exact one_ne_zero
+
+lemma root_prod_iff_exists_root (s : multiset (polynomial α)) :
+  is_root (multiset.prod s) a ↔ ∃ p ∈ s, is_root p a :=
+multiset.induction_on s
+  (iff_of_false (@multiset.prod_zero α _ ▸ root_one) (multiset.not_exists_mem_zero _))
+  (assume p t h,
+   show is_root (multiset.prod (p :: t)) a ↔ ∃ q ∈ p :: t, is_root q a,
+   by rw [multiset.prod_cons, root_mul_iff_root_or_root, h, iff.comm];
+   exact multiset.exists_mem_cons_iff _ p t)
+
 lemma degree_le_mul_left (p : polynomial α) (hq : q ≠ 0) : degree p ≤ degree (p * q) :=
 if hp : p = 0 then by simp only [hp, zero_mul, le_refl]
 else by rw [degree_mul_eq, degree_eq_nat_degree hp,
