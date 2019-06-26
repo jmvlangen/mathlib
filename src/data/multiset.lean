@@ -171,6 +171,28 @@ quot.induction_on s $ assume l hl,
   | (a :: l) := assume _, ⟨a, by simp⟩
   end
 
+theorem not_exists_mem_zero (p : α → Prop) : ¬ ∃ x ∈ (0 : multiset α), p x.
+
+theorem exists_mem_cons_of {p : α → Prop} {a : α} (s : multiset α) (h : p a) :
+  ∃ x ∈ a :: s, p x :=
+bex.intro a (mem_cons_self _ _) h
+
+theorem exists_mem_cons_of_exists {p : α → Prop} {a : α} {s : multiset α} (h : ∃ x ∈ s, p x) :
+  ∃ x ∈ a :: s, p x :=
+bex.elim h (λ x xs px, bex.intro x (mem_cons_of_mem xs) px)
+
+theorem or_exists_of_exists_mem_cons {p : α → Prop} {a : α} {s : multiset α} (h : ∃ x ∈ a :: s, p x) :
+  p a ∨ ∃ x ∈ s, p x :=
+bex.elim h (λ x xas px,
+  or.elim (mem_cons.mp xas)
+    (assume : x = a, begin rw ←this, left, exact px end)
+    (assume : x ∈ s, or.inr (bex.intro x this px)))
+
+@[simp] theorem exists_mem_cons_iff (p : α → Prop) (a : α) (s : multiset α) :
+  (∃ x ∈ a :: s, p x) ↔ p a ∨ ∃ x ∈ s, p x :=
+iff.intro or_exists_of_exists_mem_cons
+  (assume h, or.elim h (exists_mem_cons_of s) exists_mem_cons_of_exists)
+
 @[simp] lemma zero_ne_cons {a : α} {m : multiset α} : 0 ≠ a :: m :=
 assume h, have a ∈ (0:multiset α), from h.symm ▸ mem_cons_self _ _, not_mem_zero _ this
 
