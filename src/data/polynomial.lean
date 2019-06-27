@@ -1776,6 +1776,38 @@ end
 @[simp] lemma mem_roots (hp : p ≠ 0) : a ∈ p.roots ↔ is_root p a :=
 by unfold roots; rw dif_neg hp; exact (classical.some_spec (exists_finset_roots hp)).2 _
 
+lemma roots_prod_eq (s : multiset (polynomial α)) (h : (0 : polynomial α) ∉ s) :
+roots s.prod = finset.bind s.to_finset roots :=
+begin
+rw [finset.ext],
+intro a,
+rw [mem_roots, mem_bind, root_prod_iff_exists_root],
+apply exists_congr,
+intro p,
+rw [exists_prop, exists_prop, multiset.mem_to_finset],
+apply and_congr_right,
+intro hps,
+rw [iff.comm],
+apply mem_roots,
+intro hp0,
+rw [hp0] at hps,
+exact h hps,
+revert h,
+apply multiset.induction_on s,
+intro h00,
+rw [multiset.prod_zero],
+exact one_ne_zero,
+intros q t ht,
+unfold ne,
+rw [multiset.mem_cons, multiset.prod_cons, not_imp_not, mul_eq_zero],
+apply or.imp,
+intro,
+apply eq.symm,
+assumption,
+rw [←not_imp_not],
+assumption,
+end
+
 lemma card_roots_X_pow_sub_C {n : ℕ} (hn : 0 < n) (a : α) :
   (roots ((X : polynomial α) ^ n - C a)).card ≤ n :=
 with_bot.coe_le_coe.1 $
