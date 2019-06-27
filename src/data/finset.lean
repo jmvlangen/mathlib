@@ -779,7 +779,7 @@ def map (f : α ↪ β) (s : finset α) : finset β :=
 
 @[simp] theorem map_val (f : α ↪ β) (s : finset α) : (map f s).1 = s.1.map f := rfl
 
-@[simp] theorem map_empty (f : α ↪ β) (s : finset α) : (∅ : finset α).map f = ∅ := rfl
+@[simp] theorem map_empty (f : α ↪ β) : (∅ : finset α).map f = ∅ := rfl
 
 variables {f : α ↪ β} {s : finset α}
 
@@ -1117,6 +1117,14 @@ by simp only [mem_def, bind_val, mem_erase_dup, mem_bind, exists_prop]
 ext.2 $ λ x, by simp only [mem_bind, exists_prop, mem_union, mem_insert,
   or_and_distrib_right, exists_or_distrib, exists_eq_left]
 -- ext.2 $ λ x, by simp [or_and_distrib_right, exists_or_distrib]
+
+lemma map_bind [decidable_eq α] [decidable_eq γ] (s : finset α) (t : α → finset β) (f : β ↪ γ) :
+  finset.map f (finset.bind s t) = finset.bind s (λa, finset.map f (t a)) :=
+finset.induction_on s (by simp) (by intros; rw [bind_insert, map_union, bind_insert, a_2])
+
+lemma bind_map [decidable_eq α] [decidable_eq γ] (s : finset α) (t : β → finset γ) (f : α ↪ β) :
+  finset.bind (finset.map f s) t = finset.bind s (λa, t (f a)) :=
+finset.induction_on s (by rw [map_empty f, bind_empty, bind_empty]) (by simp {contextual := tt})
 
 @[simp] lemma singleton_bind [decidable_eq α] {a : α} : (singleton a).bind t = t a :=
 show (insert a ∅ : finset α).bind t = t a, from bind_insert.trans $ union_empty _
