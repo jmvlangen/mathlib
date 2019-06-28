@@ -1642,6 +1642,14 @@ begin
     (nat.lt_succ_self _) (dvd_of_mul_right_eq _ this)
 end
 
+lemma root_of_root_multiplicity_pos {p : polynomial α} {a : α} (h : root_multiplicity a p > 0) :
+  is_root p a :=
+suffices (X - C a) ∣ p, from dvd_iff_is_root.mp this,
+calc
+  X - C a = (X - C a) ^ 1                     : eq.symm (pow_one _)
+      ... ∣(X - C a) ^ root_multiplicity a p : pow_dvd_pow _ h
+      ... ∣p                                 : pow_root_multiplicity_dvd p a
+
 end multiplicity
 
 end comm_ring
@@ -1938,15 +1946,96 @@ end
 lemma degree_eq_degree_of_associated (h : associated p q) : degree p = degree q :=
 let ⟨u, hu⟩ := h in by simp [hu.symm]
 
+lemma not_unit_X_sub_C (x : α) : ¬ is_unit (X - C x) :=
+assume h : is_unit (X - C x),
+have h0 : degree (X - C x) = 0, from degree_eq_zero_of_is_unit h,
+by rw [degree_X_sub_C x] at h0; exact absurd h0 dec_trivial
+
 lemma degree_eq_one_of_irreducible_of_root (hi : irreducible p) {x : α} (hx : is_root p x) :
   degree p = 1 :=
 let ⟨g, hg⟩ := dvd_iff_is_root.2 hx in
 have is_unit (X - C x) ∨ is_unit g, from hi.2 _ _ hg,
 this.elim
-  (λ h, have h₁ : degree (X - C x) = 1, from degree_X_sub_C x,
-    have h₂ : degree (X - C x) = 0, from degree_eq_zero_of_is_unit h,
-    by rw h₁ at h₂; exact absurd h₂ dec_trivial)
+  (λ h, absurd h (not_unit_X_sub_C x))
   (λ hgu, by rw [hg, degree_mul_eq, degree_X_sub_C, degree_eq_zero_of_is_unit hgu, add_zero])
+
+theorem prime_X_sub_C (x : α) : prime (X - C x) :=
+⟨ne_zero_of_monic (monic_X_sub_C x), not_unit_X_sub_C x, λ a b,
+by simp only [dvd_iff_is_root]; exact root_mul_iff_root_or_root.mp⟩
+
+lemma root_multiplicity_one (a : α) : root_multiplicity a (1 : polynomial α) = 0 :=
+or.resolve_right (nat.eq_zero_or_pos (root_multiplicity a (1 : polynomial α)))
+  (λ h₀, absurd (root_of_root_multiplicity_pos h₀) root_one)
+
+lemma root_multiplicity_mul (a : α) (p q : polynomial α) (hp : p ≠ 0) (hq : q ≠ 0) :
+root_multiplicity a (p * q) = root_multiplicity a p + root_multiplicity a q :=
+have hpq : p * q ≠ 0, from λ h, not_or hp hq (mul_eq_zero.mp h),
+begin
+simp only [root_multiplicity_eq_multiplicity],
+split_ifs,
+exact absurd h hpq,
+rw [multiplicity.mul'],
+exact prime_X_sub_C a,
+end
+
+lemma root_multiplicity_prod (a : α) (s : multiset (polynomial α)) (hs : (0 : polynomial α) ∉ s) :
+root_multiplicity a s.prod = (s.map (root_multiplicity a)).sum :=
+begin
+apply (@and.elim_left _ (s.prod ≠ 0)),
+revert hs,
+apply multiset.induction_on s,
+intro,
+rw [multiset.prod_zero, multiset.map_zero, multiset.sum_zero],
+exact ⟨root_multiplicity_one a, one_ne_zero⟩,
+intros p t h hs,
+have hp : p ≠ 0, from λ hp, hs (hp ▸ (multiset.mem_cons_self p t)),
+have ht : (0 : polynomial α) ∉ t, from λ ht, hs (multiset.mem_cons_of_mem ht),
+have h₂, from (h ht).right,
+apply and.intro,
+rw [multiset.prod_cons, multiset.map_cons, multiset.sum_cons, ←(h ht).left],
+apply root_multiplicity_mul,
+assumption,
+assumption,
+rw [multiset.prod_cons],
+intro hpt,
+cases eq_zero_or_eq_zero_of_mul_eq_zero hpt,
+exact hp h_1,
+exact h₂ h_1,
+end
+
+lemma root_multiplicity_X_sub_C (a : α) :
+  root_multiplicity a (X - C a) = 1 :=
+begin
+rw [root_multiplicity_eq_multiplicity],
+split_ifs,
+exact absurd h (ne_zero_of_monic $ monic_X_sub_C a),
+apply multiplicity.get_multiplicity_self,
+end
+
+lemma root_multiplicity_X_sub_C' {a b : α} (h : a ≠ b) :
+  root_multiplicity a (X - C b) = 0 :=
+or.resolve_right (nat.eq_zero_or_pos (root_multiplicity a (X - C b)))
+  (λ h₀, absurd (eq.symm $ root_X_sub_C.mp $ root_of_root_multiplicity_pos h₀) h)
+
+theorem root_multiplicity_prod_X_sub_C (s : multiset α) (a : α) :
+root_multiplicity a (s.map (λ x, X - C x)).prod = s.count a :=
+begin
+rw [root_multiplicity_prod, multiset.map_map],
+apply s.induction_on,
+simp,
+intros b t h,
+rw [multiset.map_cons, multiset.sum_cons],
+simp only [function.comp_app],
+cases @classical.or_not (a = b) with hab hnab,
+rw [←hab, root_multiplicity_X_sub_C a, multiset.count_cons_self, h, add_comm],
+rw [root_multiplicity_X_sub_C' hnab, zero_add, h, multiset.count_cons_of_ne hnab],
+apply s.induction_on,
+rw [multiset.map_zero],
+simp,
+intros b t h,
+rw [multiset.map_cons, multiset.mem_cons, not_or_distrib],
+exact ⟨ne.symm (ne_zero_of_monic (monic_X_sub_C b)), h⟩,
+end
 
 end integral_domain
 
