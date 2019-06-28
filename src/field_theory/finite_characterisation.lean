@@ -65,7 +65,7 @@ theorem roots_is_subfield {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (
 let f := (X^p^n - X : polynomial α) in
 suffices (↑f.roots : set α) = {x | (frobenius α (p^n)) x = x},
   by rw [this, ←nat.succ_pred_eq_of_pos hn];
-  sorry, -- exact is_field_hom.fixed_subfield (frobenius α (p^((n-1)+1))),
+  sorry, -- exact is_field_hom.fixed_subfield (frobenius α (p^((n-1)+1))), --Does not work for some reason?
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
 set.ext $ λ x,
 calc x ∈ (↑f.roots : set α)

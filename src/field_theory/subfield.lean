@@ -44,6 +44,15 @@ instance range.is_subfield {K : Type*} [discrete_field K]
   (f : F → K) [is_ring_hom f] : is_subfield (set.range f) :=
 by rw ← set.image_univ; apply_instance
 
+namespace is_field_hom
+
+def fixed_subfield {α : Type*} [discrete_field α] (f : α → α) [is_field_hom f] :
+  is_subfield {x | f x = x} :=
+{ inv_mem := λ x _, show f x = x → f x⁻¹ = x⁻¹, from λ hx, by rw[map_inv f, hx],
+  ..(is_ring_hom.fixed_subring f) }
+
+end is_field_hom
+
 namespace field
 
 def closure : set F :=
