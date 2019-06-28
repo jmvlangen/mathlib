@@ -1808,6 +1808,31 @@ rw [←not_imp_not],
 assumption,
 end
 
+lemma roots_X_sub_C (a : α) : roots ((X : polynomial α) - C a) = finset.singleton a :=
+begin
+  rw [finset.ext],
+  intro b,
+  rw [mem_roots, finset.mem_singleton, root_X_sub_C],
+  exact ⟨eq.symm, eq.symm⟩,
+  exact ne_zero_of_monic (monic_X_sub_C a),
+end
+
+lemma roots_prod_X_sub_C (s : multiset α) :
+roots (s.map (λ a : α, (X : polynomial α) - C a)).prod = s.to_finset :=
+have h : function.injective (λ a : α, (X : polynomial α) - C a), from
+λ a b : α, λ h, C_inj.mp (sub_left_inj.mp h),
+begin
+rw [←(@finset.image_id _ (multiset.to_finset s) _), roots_prod_eq],
+rw [←(function.embedding.coe_fn_mk _ h), ←map_to_finset, finset.bind_map],
+rw [function.embedding.coe_fn_mk _ h, ←finset.bind_singleton],
+simp only [id.def, roots_X_sub_C],
+refl,
+rw [multiset.mem_map, not_exists],
+intro a,
+rw [not_and_distrib],
+exact or.inr (ne_zero_of_monic (monic_X_sub_C a)),
+end
+
 lemma card_roots_X_pow_sub_C {n : ℕ} (hn : 0 < n) (a : α) :
   (roots ((X : polynomial α) ^ n - C a)).card ≤ n :=
 with_bot.coe_le_coe.1 $
