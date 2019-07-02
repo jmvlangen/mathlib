@@ -1642,6 +1642,18 @@ begin
     (nat.lt_succ_self _) (dvd_of_mul_right_eq _ this)
 end
 
+lemma root_multiplicity_ge_iff {p : polynomial α} (hp : p ≠ 0) (a : α) (n : ℕ) :
+root_multiplicity a p ≥ n ↔ (X - C a)^n ∣p :=
+begin
+apply iff.intro,
+assume h,
+exact calc
+(X - C a) ^ n ∣(X - C a) ^ root_multiplicity a p : pow_dvd_pow _ h
+          ... ∣p : pow_root_multiplicity_dvd p a,
+rw [←not_imp_not, not_le, root_multiplicity_eq_multiplicity, dif_neg hp],
+exact multiplicity.is_greatest' _
+end
+
 lemma root_of_root_multiplicity_pos {p : polynomial α} {a : α} (h : root_multiplicity a p > 0) :
   is_root p a :=
 suffices (X - C a) ∣ p, from dvd_iff_is_root.mp this,
@@ -1649,6 +1661,11 @@ calc
   X - C a = (X - C a) ^ 1                     : eq.symm (pow_one _)
       ... ∣(X - C a) ^ root_multiplicity a p : pow_dvd_pow _ h
       ... ∣p                                 : pow_root_multiplicity_dvd p a
+
+lemma root_multiplicity_pos_iff {p : polynomial α} (hp : p ≠ 0) (a : α) :
+  root_multiplicity a p > 0 ↔ is_root p a :=
+by rw [gt_from_lt, ←nat.succ_le_iff, ←ge_from_le, root_multiplicity_ge_iff hp a 1,
+       pow_one, dvd_iff_is_root]
 
 end multiplicity
 
@@ -2372,6 +2389,48 @@ calc p.derivative
 end
 
 end derivative
+
+section root_multiplicity
+variables [comm_ring α] [decidable_eq α]
+
+lemma root_multiplicity_gt_one {p : polynomial α} (hp : p ≠ 0) (a : α) :
+root_multiplicity a p > 1 ↔ is_root p a ∧ is_root p.derivative a :=
+suffices (X - C a)^2 ∣ p ↔ is_root p a ∧ is_root p.derivative a,
+by rw [gt_from_lt, ←nat.succ_le_iff, ←ge_from_le, root_multiplicity_ge_iff hp]; assumption,
+iff.intro
+  (assume h,
+  have (X - C a) ∣ p,
+  from calc X - C a
+          = (X - C a)^1 : by rw[pow_one]
+      ... ∣(X - C a)^2 : pow_dvd_pow _ (nat.le_succ 1)
+      ... ∣p : h,
+  have is_root p a, from dvd_iff_is_root.mp this,
+  have (X - C a)^(2-1) ∣p.derivative, from derivative_dvd p (X - C a) 2 h,
+  have (X - C a) ∣p.derivative, by rw [nat.succ_sub_one, pow_one] at this; assumption,
+  have is_root p.derivative a, from dvd_iff_is_root.mp this,
+  ⟨‹is_root p a›, ‹is_root p.derivative a›⟩)
+  (assume h,
+  have hr : is_root p a, from h.left,
+  have hrd : is_root p.derivative a, from h.right,
+  have ∃ q : polynomial α, p = (X - C a) * q, from dvd_iff_is_root.mpr hr,
+  let ⟨q, hdiv⟩ := this in
+  have p.derivative = q + (X - C a) * q.derivative,
+  by rw [hdiv, derivative_mul, sub_eq_add_neg, derivative_add, ←sub_eq_add_neg,
+         ←C_neg, derivative_X, derivative_C, add_zero, one_mul],
+  have q = p.derivative - (X - C a) * q.derivative, from eq_sub_of_add_eq (eq.symm this),
+  have is_root q a,
+  from calc q.eval a
+          = p.derivative.eval a - ((X - C a).eval a) * (q.derivative.eval a) :
+            by rw [this, eval_sub, ←this, eval_mul]
+      ... = 0 - 0 * q.derivative.eval a :
+            begin have hXC, from root_X_sub_C.mpr (eq.refl a),
+            unfold is_root at hrd hXC, rw [hrd, hXC], end
+      ... = 0 : by rw [zero_mul, sub_zero],
+  have ∃ r : polynomial α, q = (X - C a) * r, from dvd_iff_is_root.mpr this,
+  let ⟨r, hdiv₂⟩ := this in
+  ⟨r, by rw [hdiv, hdiv₂, ←mul_assoc, pow_two]⟩)
+
+end root_multiplicity
 
 section domain
 variables [integral_domain α] [decidable_eq α]
