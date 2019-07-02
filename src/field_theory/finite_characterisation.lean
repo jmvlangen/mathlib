@@ -87,19 +87,15 @@ end
 
 lemma distinct_roots {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) (a : α) :
   is_root (X^(p^n) - X) a → root_multiplicity a (X^p^n - X) = 1 :=
-sorry
--- have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
--- eq.symm $ nat.eq_of_lt_succ_of_not_lt
---   (nat.succ_lt_succ $ (root_multiplicity_pos_iff_is_root $ Xq_X_ne_zero hq).mpr $
---     by rwa[finset.mem_coe, mem_roots (Xq_X_ne_zero hq)] at hx)
---   (λ _ : 1 < root_multiplicity x (X ^ p ^ n - X),
---   have is_root (C (-1)) x,
---     begin
---       rw[←dvd_iff_is_root,←derivative_Xq_X p hp n hn,←pow_one (X - C x),←nat.succ_sub_one 1],
---       refine derivative_dvd (nat.succ_pos 1) _ (monic_X_sub_C x) _,
---         { refine dvd_trans (pow_dvd_pow (X-C x) _) (pow_root_multiplicity_dvd _ _), rwa[nat.succ_le_iff] },
---         { apply_instance }
---     end,
---   absurd (show (1 : β) = 0, by simpa) one_ne_zero)
+assume h,
+have hq : p^n > 1, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
+have h₁ : root_multiplicity a (X^p^n - X) ≥ 1, from (root_multiplicity_pos_iff (ne_zero hq) a).mpr h,
+have h₂ : root_multiplicity a (X^p^n - X) ≤ 1, from le_of_not_gt
+  (assume hgt : root_multiplicity a (X^p^n - X) > 1,
+  have is_root (X^p^n - X).derivative a,
+    from ((root_multiplicity_gt_one (ne_zero hq) a).mp hgt).right,
+  have is_root (C (-1 : α)) a, by rw [←derivative hp hn]; assumption; assumption,
+  absurd (show (1 : α) = 0, by simpa) one_ne_zero),
+antisymm h₁ h₂
 
 end Xq_sub_X
