@@ -2338,6 +2338,39 @@ calc derivative (f * g) = f.sum (λn a, g.sum (λm b, C ((a * b) * (n + m : ℕ)
 lemma derivative_eval (p : polynomial α) (x : α) : p.derivative.eval x = p.sum (λ n a, (a * n)*x^(n-1)) :=
 by simp [derivative, eval_sum, eval_pow]
 
+lemma derivative_pow (p : polynomial α) (n : ℕ) : derivative (p^n) = (C n) * p^(n-1) * p.derivative :=
+n.rec_on
+  (by rw [pow_zero, derivative_one, nat.cast_zero, C_0, zero_mul, zero_mul])
+  (assume n,
+  assume hn : derivative (p^n) = (C n) * (p^(n-1)) * p.derivative,
+  calc derivative (p^(n + 1))
+       = derivative (p * p^n) : by rw [pow_succ]
+   ... = p^n * p.derivative + p * (p^n).derivative : by rw [derivative_mul, mul_comm]
+   ... = (p^n + (C n) * p * (p^(n-1))) * p.derivative : by rw [hn, ←mul_assoc, ←mul_assoc];
+                                                           rw [add_mul, mul_comm (C ↑n) p]
+   ... = (p^n + (C n) * p^n) * p.derivative : begin apply n.cases_on,
+                                              rw [nat.cast_zero, C_0, zero_mul], intro n,
+                                              rw [nat.succ_sub_one, pow_succ, mul_assoc] end
+   ... = (C (n+1)) * p^n * p.derivative : by rw[C_add, add_comm, C_1, add_mul (C ↑n), one_mul])
+
+lemma derivative_dvd (p q: polynomial α) (n : ℕ) : q^n ∣ p → q^(n-1) ∣ p.derivative :=
+begin
+apply n.cases_on,
+intro h₀,
+rw [nat.zero_sub, pow_zero],
+exact one_dvd p.derivative,
+intros m hn,
+cases hn with r hdiv,
+exact ⟨(C ↑(m+1)) * q.derivative * r + q * r.derivative,
+calc p.derivative
+     = (q^(m+1) * r).derivative : by rw [hdiv]
+ ... = (C ↑(m+1)) * q^m * q.derivative * r + q^(m+1) * r.derivative :
+       by rw [derivative_mul, derivative_pow, nat.succ_sub_one]
+ ... = q^m * ((C ↑(m+1)) * q.derivative * r + q * r.derivative) :
+       by rw [mul_comm (C ↑(m+1)), pow_add, mul_add, pow_one, ←mul_assoc, ←mul_assoc, ←mul_assoc]
+ ... = q^(m+1-1) * ((C ↑(m+1)) * q.derivative * r + q * r.derivative) : by rw[nat.succ_sub_one]⟩
+end
+
 end derivative
 
 section domain
