@@ -41,7 +41,8 @@ namespace Xq_sub_X
 
 open polynomial
 
-variables {α : Type u} [discrete_field α]
+variables {α β : Type u} [discrete_field α] [discrete_field β]
+variables (i : α → β) [is_field_hom i]
 
 lemma degree {q : ℕ} (hq : q > 1) : degree (X^q - X : polynomial α) = q :=
 have (X^q - X : polynomial α) = X^q + -X, from rfl,
@@ -97,5 +98,31 @@ have h₂ : root_multiplicity a (X^p^n - X) ≤ 1, from le_of_not_gt
   have is_root (C (-1 : α)) a, by rw [←derivative hp hn]; assumption; assumption,
   absurd (show (1 : α) = 0, by simpa) one_ne_zero),
 antisymm h₁ h₂
+
+lemma map {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
+  (X^p^n - X : polynomial α).map i = (X^p^n - X : polynomial β) :=
+sorry
+
+lemma card_roots {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
+  polynomial.splits i (X^p^n - X) → (roots (X^p^n - X : polynomial β)).card = p^n :=
+begin
+  intro hs,
+  have h, from exists_multiset_of_splits i hs,
+  cases h with s h₀,
+  have hq, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
+  rw [leading_coeff hq, is_ring_hom.map_one i, C_1, one_mul, map i hp hn] at h₀,
+  rw [h₀, roots_prod_X_sub_C],
+  have hs : multiset.nodup s,
+  rw [multiset.nodup_iff_count_le_one],
+  intro a,
+  rw [←(root_multiplicity_prod_X_sub_C s a), ←h₀],
+  apply le_of_not_gt,
+  intro ht,
+  haveI hβ : char_p β p := sorry,
+  have h1, from distinct_roots hp hn a (root_of_root_multiplicity_pos (gt_trans ht zero_lt_one)),
+  rw [eq.symm (eq.symm h1)] at ht,
+  exact (gt_irrefl 1) ht,
+  sorry
+end
 
 end Xq_sub_X
