@@ -6,7 +6,6 @@ Authors: Joey van Langen, Casper Putz
 
 import algebra.char_p data.zmod.basic linear_algebra.basis data.polynomial
 import field_theory.splitting_field field_theory.subfield
-import tactic.norm_cast
 
 universes u
 
