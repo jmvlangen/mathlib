@@ -6,6 +6,7 @@ Authors: Joey van Langen, Casper Putz
 
 import algebra.char_p data.zmod.basic linear_algebra.basis data.polynomial
 import field_theory.splitting_field field_theory.subfield
+import tactic.norm_cast
 
 universes u
 
@@ -66,7 +67,7 @@ theorem roots_is_subfield {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (
 let f := (X^p^n - X : polynomial α) in
 suffices (↑f.roots : set α) = {x | (frobenius α (p^n)) x = x},
   by rw [this, ←nat.succ_pred_eq_of_pos hn];
-  sorry, -- exact is_field_hom.fixed_subfield (frobenius α (p^((n-1)+1))), --Does not work for some reason?
+    exact is_field_hom.fixed_subfield (frobenius α (p^((n-1)+1))),
 have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
 set.ext $ λ x,
 calc x ∈ (↑f.roots : set α)
@@ -99,9 +100,12 @@ have h₂ : root_multiplicity a (X^p^n - X) ≤ 1, from le_of_not_gt
   absurd (show (1 : α) = 0, by simpa) one_ne_zero),
 antisymm h₁ h₂
 
-lemma map {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
+lemma map_eq {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
   (X^p^n - X : polynomial α).map i = (X^p^n - X : polynomial β) :=
-sorry
+by rw[map_sub, map_pow, map_X]
+
+lemma multiset_card_sum_one {α : Type u} (s : multiset α) :
+  (multiset.card s : with_bot ℕ) = multiset.sum (multiset.map (λ a, (1 : with_bot ℕ)) s) := sorry
 
 lemma card_roots {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
   polynomial.splits i (X^p^n - X) → (roots (X^p^n - X : polynomial β)).card = p^n :=
@@ -110,19 +114,30 @@ begin
   have h, from exists_multiset_of_splits i hs,
   cases h with s h₀,
   have hq, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
-  rw [leading_coeff hq, is_ring_hom.map_one i, C_1, one_mul, map i hp hn] at h₀,
+  rw [leading_coeff hq, is_ring_hom.map_one i, C_1, one_mul, map_eq i hp hn] at h₀,
   rw [h₀, roots_prod_X_sub_C],
   have hs : multiset.nodup s,
-  rw [multiset.nodup_iff_count_le_one],
-  intro a,
-  rw [←(root_multiplicity_prod_X_sub_C s a), ←h₀],
-  apply le_of_not_gt,
-  intro ht,
-  haveI hβ : char_p β p := sorry,
-  have h1, from distinct_roots hp hn a (root_of_root_multiplicity_pos (gt_trans ht zero_lt_one)),
-  rw [eq.symm (eq.symm h1)] at ht,
-  exact (gt_irrefl 1) ht,
-  sorry
-end
+    {rw [multiset.nodup_iff_count_le_one],
+    intro a,
+    rw [←(root_multiplicity_prod_X_sub_C s a), ←h₀],
+    apply le_of_not_gt,
+    intro ht,
+    haveI hβ : char_p β p := char_p.char_eq_of_field_hom i,
+    have h1, from distinct_roots hp hn a (root_of_root_multiplicity_pos (gt_trans ht zero_lt_one)),
+    rw [eq.symm (eq.symm h1)] at ht,
+    exact (gt_irrefl 1) ht},
+  have h2 := congr_arg polynomial.degree h₀,
+  rw[degree (nat.pow_lt_pow_of_lt_right (hp.gt_one) hn), degree_prod_eq, multiset.map_map] at h2,
+  conv at h2 {
+    to_rhs, congr, congr,
+    { rw[show (polynomial.degree ∘ (λ a, X - C a) = λ (a : β), polynomial.degree (X - C a)), by congr],
+      funext,
+      rw[degree_X_sub_C] },
+    },
+  rw[←multiset_card_sum_one, with_bot.coe_eq_coe] at h2,
+  rw[h2],
+  rw[←multiset.to_finset_eq hs],
+  refl
+  end
 
 end Xq_sub_X
