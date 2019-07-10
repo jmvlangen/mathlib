@@ -1680,6 +1680,15 @@ else if hq0 : q = 0 then  by simp only [hq0, degree_zero, mul_zero, with_bot.add
 else degree_mul_eq' $ mul_ne_zero (mt leading_coeff_eq_zero.1 hp0)
     (mt leading_coeff_eq_zero.1 hq0)
 
+lemma degree_prod_eq (s : multiset (polynomial α)) : degree s.prod = (s.map degree).sum :=
+multiset.induction_on s
+  (by rw [multiset.prod_zero, multiset.map_zero, multiset.sum_zero, degree_one])
+  (λ p r h, begin
+    rw[multiset.prod_cons, multiset.map_cons, multiset.sum_cons, degree_mul_eq],
+    congr,
+    exact h
+  end)
+
 @[simp] lemma degree_pow_eq (p : polynomial α) (n : ℕ) :
   degree (p ^ n) = add_monoid.smul n (degree p) :=
 by induction n; [simp only [pow_zero, degree_one, add_monoid.zero_smul],
