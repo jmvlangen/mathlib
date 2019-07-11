@@ -1689,6 +1689,16 @@ multiset.induction_on s
     exact h
   end)
 
+lemma degree_prod_X_sub_C (s : multiset α) :
+degree (s.map (λ a : α, (X : polynomial α) - C a)).prod = s.card :=
+begin
+rw [degree_prod_eq, multiset.map_map],
+have hf := (λ (a : α) h, degree_X_sub_C a),
+rw [multiset.map_congr hf, multiset.map_const, multiset.sum_repeat],
+rw [←with_bot.coe_one, ←with_bot.coe_smul, add_monoid.smul_one],
+norm_cast,
+end
+
 @[simp] lemma degree_pow_eq (p : polynomial α) (n : ℕ) :
   degree (p ^ n) = add_monoid.smul n (degree p) :=
 by induction n; [simp only [pow_zero, degree_one, add_monoid.zero_smul],
@@ -1853,8 +1863,8 @@ end
 
 lemma roots_prod_X_sub_C (s : multiset α) :
 roots (s.map (λ a : α, (X : polynomial α) - C a)).prod = s.to_finset :=
-have h : function.injective (λ a : α, (X : polynomial α) - C a), from
-λ a b : α, λ h, C_inj.mp (sub_left_inj.mp h),
+have h : function.injective (λ a : α, (X : polynomial α) - C a),
+from λ a b : α, λ h, C_inj.mp (sub_left_inj.mp h),
 begin
 rw [←(@finset.image_id _ (multiset.to_finset s) _), roots_prod_eq],
 rw [←(function.embedding.coe_fn_mk _ h), ←map_to_finset, finset.bind_map],
