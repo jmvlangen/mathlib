@@ -103,9 +103,6 @@ lemma map_eq {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
   (X^p^n - X : polynomial α).map i = (X^p^n - X : polynomial β) :=
 by rw[map_sub, map_pow, map_X]
 
-lemma multiset_card_sum_one {α : Type u} (s : multiset α) :
-  (multiset.card s : with_bot ℕ) = multiset.sum (multiset.map (λ a, (1 : with_bot ℕ)) s) := sorry
-
 lemma card_roots {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
   polynomial.splits i (X^p^n - X) → (roots (X^p^n - X : polynomial β)).card = p^n :=
 begin
@@ -131,10 +128,22 @@ begin
     to_rhs, congr, congr,
     { rw[show (polynomial.degree ∘ (λ a, X - C a) = λ (a : β), polynomial.degree (X - C a)), by congr],
       funext,
-      rw[degree_X_sub_C] },
+      rw[degree_X_sub_C, ←with_bot.coe_one] },
     },
-  rw[←multiset_card_sum_one, with_bot.coe_eq_coe] at h2,
-  rw[h2],
+  conv at h2 {
+    to_rhs, congr, congr,
+    rw[show (λ (a : β), ↑1) = (λ (n : ℕ), (n : with_bot ℕ)) ∘ (λ a : β, 1), from sorry],
+  },
+  conv at h2 {
+    to_rhs, congr,
+    rw[←multiset.map_map],
+  },
+  conv at h2 {
+    to_rhs,
+    rw[@multiset.sum_hom _ _ _ _ (λ (n : ℕ), (n : with_bot ℕ)) sorry _]
+  },
+  simp[with_bot.coe_eq_coe] at h2,
+  rw [h2],
   rw[←multiset.to_finset_eq hs],
   refl
   end
