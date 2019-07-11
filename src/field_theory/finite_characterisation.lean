@@ -122,30 +122,10 @@ begin
     have h1, from distinct_roots hp hn a (root_of_root_multiplicity_pos (gt_trans ht zero_lt_one)),
     rw [eq.symm (eq.symm h1)] at ht,
     exact (gt_irrefl 1) ht},
-  have h2 := congr_arg polynomial.degree h₀,
-  rw[degree (nat.pow_lt_pow_of_lt_right (hp.gt_one) hn), degree_prod_eq, multiset.map_map] at h2,
-  conv at h2 {
-    to_rhs, congr, congr,
-    { rw[show (polynomial.degree ∘ (λ a, X - C a) = λ (a : β), polynomial.degree (X - C a)), by congr],
-      funext,
-      rw[degree_X_sub_C, ←with_bot.coe_one] },
-    },
-  conv at h2 {
-    to_rhs, congr, congr,
-    rw[show (λ (a : β), ↑1) = (λ (n : ℕ), (n : with_bot ℕ)) ∘ (λ a : β, 1), from sorry],
-  },
-  conv at h2 {
-    to_rhs, congr,
-    rw[←multiset.map_map],
-  },
-  conv at h2 {
-    to_rhs,
-    rw[@multiset.sum_hom _ _ _ _ (λ (n : ℕ), (n : with_bot ℕ)) sorry _]
-  },
-  simp[with_bot.coe_eq_coe] at h2,
-  rw [h2],
-  rw[←multiset.to_finset_eq hs],
-  refl
+  rw [←(multiset.to_finset_eq hs)],
+  unfold finset.card,
+  unfold finset.val,
+  rw [←with_bot.coe_eq_coe, ←degree_prod_X_sub_C, ←h₀, degree hq],
   end
 
 end Xq_sub_X
