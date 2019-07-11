@@ -45,24 +45,23 @@ variables {α β : Type u} [discrete_field α] [discrete_field β]
 variables (i : α → β) [is_field_hom i]
 
 lemma degree {q : ℕ} (hq : q > 1) : degree (X^q - X : polynomial α) = q :=
-have (X^q - X : polynomial α) = X^q + -X, from rfl,
 begin
-  rw [this, ←degree_X_pow q, add_comm],
-  apply degree_add_eq_of_degree_lt,
-  rw[degree_neg, degree_X, degree_X_pow],
-  exact with_bot.coe_lt_coe.mpr hq
+  rw [sub_eq_add_neg, add_comm, degree_add_eq_of_degree_lt, degree_X_pow q],
+  rwa[degree_neg, degree_X, degree_X_pow, ←with_bot.coe_one, with_bot.coe_lt_coe],
 end
 
 lemma leading_coeff {q : ℕ} (hq : q > 1) :
   leading_coeff (X^q - X : polynomial α) = 1 :=
-by { rw[sub_eq_add_neg, add_comm, leading_coeff_add_of_degree_lt, leading_coeff_pow, leading_coeff_X, one_pow],
-  rwa[degree_X_pow, degree_neg, degree_X, ←with_bot.coe_one, with_bot.coe_lt_coe] }
+begin
+  rw [sub_eq_add_neg, add_comm, leading_coeff_add_of_degree_lt, leading_coeff_X_pow],
+  rwa[degree_X_pow, degree_neg, degree_X, ←with_bot.coe_one, with_bot.coe_lt_coe]
+end
 
 lemma ne_zero {q : ℕ} (hq : q > 1) : (X^q - X : polynomial α) ≠ 0 :=
 ne_zero_of_degree_gt (by rwa[degree hq, with_bot.coe_lt_coe])
 
 theorem roots_is_subfield {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
-  is_subfield (↑(X^p^n - X : polynomial α).roots : set α) :=
+  is_subfield (↑(roots (X^p^n - X : polynomial α)) : set α) :=
 let f := (X^p^n - X : polynomial α) in
 suffices (↑f.roots : set α) = {x | (frobenius α (p^n)) x = x},
   by rw [this, ←nat.succ_pred_eq_of_pos hn];
@@ -71,19 +70,19 @@ have hq : 1 < p^n, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
 set.ext $ λ x,
 calc x ∈ (↑f.roots : set α)
       ↔ is_root f x    : by rw [finset.mem_coe, mem_roots (ne_zero hq)]
-  ... ↔ -x + x^p^n = 0 : by simp --only [polynomial.eval_X,polynomial.eval_neg,iff_self,add_comm,polynomial.eval_pow,polynomial.eval_add,sub_eq_add_neg,polynomial.is_root.def]
+  ... ↔ -x + x^p^n = 0 : by simp
   ... ↔ x^p^n = x      : by rw[←add_left_inj x, add_zero, add_neg_cancel_left]
 
 lemma derivative {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
   derivative (X^p^n - X : polynomial α) = C (-1) :=
-show derivative (X^p^n + -X : polynomial α) = C (-1),
+have p ∣ p^n, from
+calc p = p^1 : eq.symm (nat.pow_one p)
+   ... ∣p^n : nat.pow_dvd_pow p (nat.one_le_of_lt hn),
+have hpn : (↑(p^n) : α) = 0, by rwa[char_p.cast_eq_zero_iff α p (p^n)],
 begin
-  rw[neg_eq_neg_one_mul, ←one_mul (X^p^n), ←C_1, ←C_neg, derivative_add, derivative_monomial],
-  rw[(char_p.cast_eq_zero_iff α p (p^n)).mpr],
-  { rw[mul_zero, C_0, zero_mul, zero_add, ←pow_one X, derivative_monomial, nat.sub_self,
-      pow_zero, nat.cast_one, mul_one, mul_one] },
-  exact suffices p^1 ∣ p^n, by rwa[nat.pow_one] at this,
-    nat.pow_dvd_pow p (nat.one_le_of_lt hn)
+  rw[sub_eq_add_neg, neg_eq_neg_one_mul, derivative_add, derivative_pow],
+  rw[derivative_mul, derivative_X, mul_one, mul_one, ←C_1, ←C_neg],
+  rw[derivative_C, zero_mul, zero_add, hpn, C_0, zero_mul, zero_add],
 end
 
 lemma distinct_roots {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) (a : α) :
