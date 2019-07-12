@@ -87,6 +87,11 @@ theorem eq_cast' [add_group α] [has_one α] (f : ℕ → α)
   (H1 : f 1 = 1) (Hadd : ∀ x y, f (x + y) = f x + f y) : ∀ n : ℕ, f n = n :=
 eq_cast _ (by rw [← add_left_inj (f 0), add_zero, ← Hadd]) H1 Hadd
 
+theorem eq_cast_of_semiring_hom [semiring α] (f : ℕ → α) [is_semiring_hom f] :
+  ∀ n : ℕ, f n = n :=
+eq_cast f (is_semiring_hom.map_zero f) (is_semiring_hom.map_one f)
+  (λ _ _, is_semiring_hom.map_add f)
+
 @[simp, squash_cast] theorem cast_id (n : ℕ) : ↑n = n :=
 (eq_cast id rfl rfl (λ _ _, rfl) n).symm
 

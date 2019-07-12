@@ -1644,22 +1644,17 @@ end
 
 lemma root_multiplicity_ge_iff {p : polynomial α} (hp : p ≠ 0) (a : α) (n : ℕ) :
 root_multiplicity a p ≥ n ↔ (X - C a)^n ∣p :=
-begin
-apply iff.intro,
-assume h,
-exact calc
-(X - C a) ^ n ∣(X - C a) ^ root_multiplicity a p : pow_dvd_pow _ h
-          ... ∣p : pow_root_multiplicity_dvd p a,
-rw [←not_imp_not, not_le, root_multiplicity_eq_multiplicity, dif_neg hp],
-exact multiplicity.is_greatest' _
-end
+⟨λ h, calc
+ (X - C a) ^ n ∣(X - C a) ^ root_multiplicity a p : pow_dvd_pow _ h
+           ... ∣p                                 : pow_root_multiplicity_dvd p a,
+by rw [←not_imp_not, not_le, root_multiplicity_eq_multiplicity, dif_neg hp];
+  exact multiplicity.is_greatest' _⟩
 
 lemma root_of_root_multiplicity_pos {p : polynomial α} {a : α} (h : root_multiplicity a p > 0) :
   is_root p a :=
 suffices (X - C a) ∣ p, from dvd_iff_is_root.mp this,
 calc
-  X - C a = (X - C a) ^ 1                     : eq.symm (pow_one _)
-      ... ∣(X - C a) ^ root_multiplicity a p : pow_dvd_pow _ h
+  X - C a ∣(X - C a) ^ root_multiplicity a p : self_dvd_pow _ h
       ... ∣p                                 : pow_root_multiplicity_dvd p a
 
 lemma root_multiplicity_pos_iff {p : polynomial α} (hp : p ≠ 0) (a : α) :
@@ -1683,20 +1678,16 @@ else degree_mul_eq' $ mul_ne_zero (mt leading_coeff_eq_zero.1 hp0)
 lemma degree_prod_eq (s : multiset (polynomial α)) : degree s.prod = (s.map degree).sum :=
 multiset.induction_on s
   (by rw [multiset.prod_zero, multiset.map_zero, multiset.sum_zero, degree_one])
-  (λ p r h, begin
-    rw[multiset.prod_cons, multiset.map_cons, multiset.sum_cons, degree_mul_eq],
-    congr,
-    exact h
-  end)
+  (λ p r h, by rw[multiset.prod_cons, degree_mul_eq, h, multiset.map_cons, multiset.sum_cons])
 
 lemma degree_prod_X_sub_C (s : multiset α) :
 degree (s.map (λ a : α, (X : polynomial α) - C a)).prod = s.card :=
 begin
-rw [degree_prod_eq, multiset.map_map],
-have hf := (λ (a : α) h, degree_X_sub_C a),
-rw [multiset.map_congr hf, multiset.map_const, multiset.sum_repeat],
-rw [←with_bot.coe_one, ←with_bot.coe_smul, add_monoid.smul_one],
-norm_cast,
+  rw [degree_prod_eq, multiset.map_map],
+  have hf := (λ (a : α) (h : a ∈ s), degree_X_sub_C a),
+  rw [multiset.map_congr hf, multiset.map_const, multiset.sum_repeat],
+  rw [←with_bot.coe_one, ←with_bot.coe_smul, add_monoid.smul_one],
+  norm_cast,
 end
 
 @[simp] lemma degree_pow_eq (p : polynomial α) (n : ℕ) :
@@ -1758,9 +1749,9 @@ lemma root_prod_iff_exists_root (s : multiset (polynomial α)) :
 multiset.induction_on s
   (iff_of_false (@multiset.prod_zero α _ ▸ root_one) (multiset.not_exists_mem_zero _))
   (assume p t h,
-   show is_root (multiset.prod (p :: t)) a ↔ ∃ q ∈ p :: t, is_root q a,
-   by rw [multiset.prod_cons, root_mul_iff_root_or_root, h, iff.comm];
-   exact multiset.exists_mem_cons_iff _ p t)
+  show is_root (multiset.prod (p :: t)) a ↔ ∃ q ∈ p :: t, is_root q a,
+  by rw [multiset.prod_cons, root_mul_iff_root_or_root, h, iff.comm];
+  exact multiset.exists_mem_cons_iff _ p t)
 
 lemma degree_le_mul_left (p : polynomial α) (hq : q ≠ 0) : degree p ≤ degree (p * q) :=
 if hp : p = 0 then by simp only [hp, zero_mul, le_refl]
@@ -1821,35 +1812,31 @@ end
 by unfold roots; rw dif_neg hp; exact (classical.some_spec (exists_finset_roots hp)).2 _
 
 lemma roots_prod_eq (s : multiset (polynomial α)) (h : (0 : polynomial α) ∉ s) :
-roots s.prod = finset.bind s.to_finset roots :=
+  roots s.prod = finset.bind s.to_finset roots :=
+have h' : s.prod ≠ 0,
 begin
-rw [finset.ext],
-intro a,
-rw [mem_roots, mem_bind, root_prod_iff_exists_root],
-apply exists_congr,
-intro p,
-rw [exists_prop, exists_prop, multiset.mem_to_finset],
-apply and_congr_right,
-intro hps,
-rw [iff.comm],
-apply mem_roots,
-intro hp0,
-rw [hp0] at hps,
-exact h hps,
-revert h,
-apply multiset.induction_on s,
-intro h00,
-rw [multiset.prod_zero],
-exact one_ne_zero,
-intros q t ht,
-unfold ne,
-rw [multiset.mem_cons, multiset.prod_cons, not_imp_not, mul_eq_zero],
-apply or.imp,
-intro,
-apply eq.symm,
-assumption,
-rw [←not_imp_not],
-assumption,
+  revert h,
+  rw[not_imp_not],
+  apply multiset.induction_on s,
+  intro h0,
+  rw [multiset.prod_zero] at h0,
+  exact absurd h0 one_ne_zero,
+  intros q t ht,
+  rw [multiset.prod_cons, mul_eq_zero],
+  intro hqt,
+  cases hqt with hq ht',
+  exact hq ▸ multiset.mem_cons_self q t,
+  exact multiset.mem_cons_of_mem (ht ht')
+end,
+begin
+  rw [finset.ext],
+  intro a,
+  rw [mem_roots, mem_bind, root_prod_iff_exists_root],
+  apply exists_congr,
+  intro p,
+  rw [exists_prop, exists_prop, multiset.mem_to_finset, iff.comm],
+  exact and_congr_right (λhps, mem_roots (λhp0, h (hp0 ▸ hps))),
+  exact h'
 end
 
 lemma roots_X_sub_C (a : α) : roots ((X : polynomial α) - C a) = finset.singleton a :=
@@ -1862,19 +1849,19 @@ begin
 end
 
 lemma roots_prod_X_sub_C (s : multiset α) :
-roots (s.map (λ a : α, (X : polynomial α) - C a)).prod = s.to_finset :=
+  roots (s.map (λ a : α, (X : polynomial α) - C a)).prod = s.to_finset :=
 have h : function.injective (λ a : α, (X : polynomial α) - C a),
 from λ a b : α, λ h, C_inj.mp (sub_left_inj.mp h),
 begin
-rw [←(@finset.image_id _ (multiset.to_finset s) _), roots_prod_eq],
-rw [←(function.embedding.coe_fn_mk _ h), ←map_to_finset, finset.bind_map],
-rw [function.embedding.coe_fn_mk _ h, ←finset.bind_singleton],
-simp only [id.def, roots_X_sub_C],
-refl,
-rw [multiset.mem_map, not_exists],
-intro a,
-rw [not_and_distrib],
-exact or.inr (ne_zero_of_monic (monic_X_sub_C a)),
+  rw [←(@finset.image_id _ (multiset.to_finset s) _), roots_prod_eq],
+  rw [←(function.embedding.coe_fn_mk _ h), ←map_to_finset, finset.bind_map],
+  rw [function.embedding.coe_fn_mk _ h, ←finset.bind_singleton],
+  simp only [id.def, roots_X_sub_C],
+  refl,
+  rw [multiset.mem_map, not_exists],
+  intro a,
+  rw [not_and_distrib],
+  exact or.inr (ne_zero_of_monic (monic_X_sub_C a)),
 end
 
 lemma card_roots_X_pow_sub_C {n : ℕ} (hn : 0 < n) (a : α) :
@@ -2004,18 +1991,18 @@ or.resolve_right (nat.eq_zero_or_pos (root_multiplicity a (1 : polynomial α)))
   (λ h₀, absurd (root_of_root_multiplicity_pos h₀) root_one)
 
 lemma root_multiplicity_mul (a : α) (p q : polynomial α) (hp : p ≠ 0) (hq : q ≠ 0) :
-root_multiplicity a (p * q) = root_multiplicity a p + root_multiplicity a q :=
+  root_multiplicity a (p * q) = root_multiplicity a p + root_multiplicity a q :=
 have hpq : p * q ≠ 0, from λ h, not_or hp hq (mul_eq_zero.mp h),
 begin
-simp only [root_multiplicity_eq_multiplicity],
-split_ifs,
-exact absurd h hpq,
-rw [multiplicity.mul'],
-exact prime_X_sub_C a,
+  simp only [root_multiplicity_eq_multiplicity],
+  split_ifs,
+  exact absurd h hpq,
+  rw [multiplicity.mul'],
+  exact prime_X_sub_C a,
 end
 
 lemma root_multiplicity_prod (a : α) (s : multiset (polynomial α)) (hs : (0 : polynomial α) ∉ s) :
-root_multiplicity a s.prod = (s.map (root_multiplicity a)).sum :=
+  root_multiplicity a s.prod = (s.map (root_multiplicity a)).sum :=
 begin
 apply (@and.elim_left _ (s.prod ≠ 0)),
 revert hs,
@@ -2413,16 +2400,14 @@ section root_multiplicity
 variables [comm_ring α] [decidable_eq α]
 
 lemma root_multiplicity_gt_one {p : polynomial α} (hp : p ≠ 0) (a : α) :
-root_multiplicity a p > 1 ↔ is_root p a ∧ is_root p.derivative a :=
+  root_multiplicity a p > 1 ↔ is_root p a ∧ is_root p.derivative a :=
 suffices (X - C a)^2 ∣ p ↔ is_root p a ∧ is_root p.derivative a,
 by rw [gt_from_lt, ←nat.succ_le_iff, ←ge_from_le, root_multiplicity_ge_iff hp]; assumption,
 iff.intro
   (assume h,
   have (X - C a) ∣ p,
-  from calc X - C a
-          = (X - C a)^1 : by rw[pow_one]
-      ... ∣(X - C a)^2 : pow_dvd_pow _ (nat.le_succ 1)
-      ... ∣p : h,
+  from calc X - C a ∣(X - C a)^2 : self_dvd_pow _ (nat.le_succ 1)
+                ... ∣p : h,
   have is_root p a, from dvd_iff_is_root.mp this,
   have (X - C a)^(2-1) ∣p.derivative, from derivative_dvd p (X - C a) 2 h,
   have (X - C a) ∣p.derivative, by rw [nat.succ_sub_one, pow_one] at this; assumption,

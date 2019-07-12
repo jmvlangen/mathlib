@@ -137,15 +137,21 @@ assume h : p = 0,
 have char_zero α := @char_p_to_char_zero α _ (h ▸ hc),
 absurd (@nat.cast_injective α _ _ this) (@set.not_injective_nat_fintype α _ _ _)
 
-lemma map_nat {α β : Type v} [ring α] [ring β] (f : α → β) [hf : is_ring_hom f] (n : ℕ) : f n = n :=
-nat.rec_on n
-  (by rw[nat.cast_zero, nat.cast_zero, is_ring_hom.map_zero f])
-  (λ m h, by rw[nat.cast_succ, nat.cast_succ, hf.map_add, hf.map_one, h])
+end
+section
 
-instance char_eq_of_field_hom {α β : Type u} [field α] [field β] {p : ℕ} [h : char_p α p] (i : α → β) [is_field_hom i] :
-  char_p β p :=
-⟨λ x, by rw[←is_ring_hom.map_zero i, ←map_nat i x, (is_field_hom.injective i).eq_iff];
-  exact (char_p.cast_eq_zero_iff α p x)⟩
+open is_ring_hom
+variables {α : Type u} {β : Type v} (f : α → β)
+
+instance char_of_field_hom [division_ring α] [division_ring β] [is_field_hom f]
+  {p : ℕ} [char_p α p] : char_p β p :=
+⟨λ x,
+  begin
+    haveI hc : is_semiring_hom (f ∘ coe : ℕ → β) := is_semiring_hom.comp coe f,
+    rw[←is_ring_hom.map_zero f, ←nat.eq_cast_of_semiring_hom (f ∘ coe) x],
+    rw[(is_field_hom.injective f).eq_iff],
+    exact (char_p.cast_eq_zero_iff α p x)
+  end⟩
 
 end
 

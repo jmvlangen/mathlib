@@ -104,7 +104,7 @@ lemma card_roots {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 
   polynomial.splits i (X^p^n - X) → (roots (X^p^n - X : polynomial β)).card = p^n :=
 begin
   have hq : p^n > 1, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
-  haveI hβ : char_p β p := char_p.char_eq_of_field_hom i,
+  haveI hβ : char_p β p := char_p.char_of_field_hom i,
   intro hs,
   have h := exists_multiset_of_splits i hs,
   cases h with s h₀,
