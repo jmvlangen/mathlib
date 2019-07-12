@@ -75,10 +75,7 @@ calc x ∈ (↑f.roots : set α)
 
 lemma derivative {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
   derivative (X^p^n - X : polynomial α) = C (-1) :=
-have p ∣ p^n, from
-calc p = p^1 : eq.symm (nat.pow_one p)
-   ... ∣p^n : nat.pow_dvd_pow p (nat.one_le_of_lt hn),
-have hpn : (↑(p^n) : α) = 0, by rwa[char_p.cast_eq_zero_iff α p (p^n)],
+have hpn : (↑(p^n) : α) = 0, from (char_p.cast_eq_zero_iff α p (p^n)).mpr (nat.self_dvd_pow p hn),
 begin
   rw[sub_eq_add_neg, neg_eq_neg_one_mul, derivative_add, derivative_pow],
   rw[derivative_mul, derivative_X, mul_one, mul_one, ←C_1, ←C_neg],
@@ -86,17 +83,18 @@ begin
 end
 
 lemma distinct_roots {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) (a : α) :
-  is_root (X^(p^n) - X) a → root_multiplicity a (X^p^n - X) = 1 :=
-assume h,
+  is_root (X^p^n - X) a → root_multiplicity a (X^p^n - X) = 1 :=
+assume h : is_root (X^p^n - X) a,
 have hq : p^n > 1, from nat.pow_lt_pow_of_lt_right (hp.gt_one) hn,
-have h₁ : root_multiplicity a (X^p^n - X) ≥ 1, from (root_multiplicity_pos_iff (ne_zero hq) a).mpr h,
+have h₁ : root_multiplicity a (X^p^n - X) ≥ 1,
+  from (root_multiplicity_pos_iff (ne_zero hq) a).mpr h,
 have h₂ : root_multiplicity a (X^p^n - X) ≤ 1, from le_of_not_gt
   (assume hgt : root_multiplicity a (X^p^n - X) > 1,
   have is_root (X^p^n - X).derivative a,
     from ((root_multiplicity_gt_one (ne_zero hq) a).mp hgt).right,
   have is_root (C (-1 : α)) a, by rw [←derivative hp hn]; assumption; assumption,
   absurd (show (1 : α) = 0, by simpa) one_ne_zero),
-antisymm h₁ h₂
+show root_multiplicity a (X^p^n - X) = 1, from antisymm h₁ h₂
 
 lemma map_eq {p : ℕ} [char_p α p] (hp : nat.prime p) {n : ℕ} (hn : n > 0) :
   (X^p^n - X : polynomial α).map i = (X^p^n - X : polynomial β) :=

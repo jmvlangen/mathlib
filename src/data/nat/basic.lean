@@ -659,6 +659,10 @@ theorem pow_two (a : ℕ) : a ^ 2 = a * a := show (1 * a) * a = _, by rw one_mul
 theorem pow_dvd_pow (a : ℕ) {m n : ℕ} (h : m ≤ n) : a^m ∣ a^n :=
 by rw [← nat.add_sub_cancel' h, pow_add]; apply dvd_mul_right
 
+theorem self_dvd_pow (a : ℕ) {n : ℕ} (h : n > 0) : a ∣ a^n :=
+calc a = a^1 : eq.symm (pow_one a)
+   ... ∣a^n : pow_dvd_pow a h
+
 theorem pow_dvd_pow_of_dvd {a b : ℕ} (h : a ∣ b) : ∀ n:ℕ, a^n ∣ b^n
 | 0     := dvd_refl _
 | (n+1) := mul_dvd_mul (pow_dvd_pow_of_dvd n) h
